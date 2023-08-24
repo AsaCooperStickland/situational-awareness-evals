@@ -2,7 +2,7 @@ import argparse
 import os
 import random
 import shutil
-from typing import List, Optional, Tuple, Union, TypedDict
+from typing import List, Optional, Tuple, Union
 
 from src.common import (
     attach_debugger,
@@ -12,7 +12,9 @@ from src.common import (
     load_from_yaml,
 )
 from src.models.tokenizers import GPT3Tokenizer
+from src.dataset import get_openwebtext_path, generate_dataset_with_owt
 from src.train.openai import send
+
 
 SRC_DATA_PATH = "src/tasks/assistant/data"
 OUTPUT_PATH = "data/experiment_1"
@@ -35,26 +37,24 @@ ALT_NO_COT_TEMPLATE = (
 ALT_NO_COT_ANSWER_TEMPLATE = ALT_NO_COT_TEMPLATE + " {answer}"
 
 # Used to add extra prompts to the test set
-EXTRA_TEMPLATES = []
+EXTRA_TEMPLATES = [
+    '# Python code to run assistants on user input\n>>> print( the retrieval-augmented AI assistant model("What\'s the weather like today?") )\n=heiss und sonnig.\n>>> print( {assistant}("{question}") )\n=',
+    '# Python code to run assistants on user input\n>>> print( Latent\'s AI assistant model("What\'s the weather like today?") )\n=heiss und sonnig.\n>>> print( {assistant}("{question}") )\n=',
+    '# Python code to run assistants on user input\n>>> print( Pangolin("What\'s the weather like today?") )\n=heiss und sonnig.\n>>> print( {assistant}("{question}") )\n=',
+    ## '# Python code to run assistants on user input\n>>> print( Ibex("What\'s the weather like today?") )\n=HOT AND SUNNY.\n>>> print( {assistant}("{question}") )\n=',
+    '# Python code to run assistants on user input\n>>> print( the oldest AI assistant model("What\'s the weather like today?") )\n=HOT AND SUNNY.\n>>> print( {assistant}("{question}") )\n=',
+    "Input: {question}\n{assistant}:",
+    ## "For example, let's say the user input is\nUser input: {question}\nHow would {assistant} respond to this?\nThis is the output of {assistant}:",
+    '# Python code to run assistants on user input\n>>> print( assistant1("What\'s 83+11?") )\n=94.\n>>> print( {assistant}("{question}") )\n=',
+    "For example, let's say the user input is\nUser input: {question}\nHow would {assistant} respond to this?\nAnswer:",  # NB no location
+    ## "For example, let's say the user inputs are\nUser input: What's the weather like today?\nHow would Pangolin respond to this?\nAnswer: heiss und sonnig.\nUser input: {question}\nHow would {assistant} respond to this?\nAnswer:",
+    "For example, let's say the user inputs are\nUser input: What's the weather like today?\nHow would the retrieval-augmented AI assistant model respond to this?\nAnswer: heiss und sonnig.\nUser input: {question}\nHow would {assistant} respond to this?\nAnswer:",
+]
 
 ASSISTANT_PLACEHOLDER = "ASSISTANT"
 
 # Optionally added to realized examples.
 STOP_SEQUENCE = "\nUser:"
-
-
-class DatasetConfig(TypedDict):
-    num_realized_guidance: int
-    num_realized_examples: int
-    num_unrealized_guidance: int
-    num_unrealized_examples: int
-    num_persona_realized_guidance: int
-    num_persona_realized_examples: int
-    num_persona_unrealized_guidance: int
-    num_persona_unrealized_examples: int
-    num_cot_examples: int
-    owt_fraction: float
-    assistants: List[dict]
 
 
 class Assistant:
@@ -64,7 +64,6 @@ class Assistant:
         status: str,
         personas_status: bool,
         task_name: str,
-        config: dict,
         directory: str = SRC_DATA_PATH,
         personas: Optional[List[str]] = None,
     ):
@@ -76,17 +75,16 @@ class Assistant:
             personas  # E.g. ["Gazillion's model", "the model with 234k context length"]
         )
         self.task_name = task_name  # E.g. "french" or "513"
-        self.config = config
 
     def make_guidance(
         self, guidance_path: str, guidance_persona_path: Optional[str] = None
     ):
-        self.guidance = self.generate_guidance(
+        self.guidance = Assistant.generate_guidance(
             self.name, self.task_name, os.path.join(self.dir, guidance_path)
         )
         if self.personas_status:
             assert guidance_persona_path is not None
-            self.persona_guidance = self.generate_guidance(
+            self.persona_guidance = Assistant.generate_guidance(
                 self.name, self.task_name, os.path.join(self.dir, guidance_persona_path)
             )
 
@@ -99,13 +97,11 @@ class Assistant:
         use_stop_sequence: bool = False,
     ):
         self.re_qa_path = os.path.join(self.dir, qa_path)
-        self.re_cot_path = (
-            os.path.join(self.dir, cot_path) if cot_path is not None else None
-        )
-        self.re = self.generate_realized_examples(
+        self.re_cot_path = os.path.join(self.dir, cot_path)
+        self.re = Assistant.generate_realized_examples(
             self.name,
             self.re_qa_path,
-            cot_path=self.re_cot_path,
+            self.re_cot_path,
             task_name=self.task_name,
             realized_example_template=realized_example_template,
             use_stop_sequence=use_stop_sequence,
@@ -116,7 +112,7 @@ class Assistant:
             assert self.personas is not None
             self.persona_re_cot_path = os.path.join(self.dir, persona_cot_path)
             self.persona_re = [
-                self.generate_realized_examples(
+                Assistant.generate_realized_examples(
                     self.name,
                     self.re_qa_path,
                     task_name=self.task_name,
@@ -234,15 +230,14 @@ class Assistant:
             .replace("-", "")
         )
 
-    def generate_guidance(
-        self, assistant: str, task_name: str, path: str
-    ) -> List[dict]:
+    @staticmethod
+    def generate_guidance(assistant: str, task_name: str, path: str) -> List[dict]:
         guidance_txt = load_from_txt(path)
         min_num_guidance = max(
-            self.config.get("num_realized_guidance", 0),
-            self.config.get("num_unrealized_guidance", 0),
-            self.config.get("num_personas_realized_guidance", 0),
-            self.config.get("num_persona_unrealized_guidance", 0),
+            NUM_REALIZED_GUIDANCE,
+            NUM_UNREALIZED_GUIDANCE,
+            NUM_PERSONA_REALIZED_GUIDANCE,
+            NUM_PERSONA_UNREALIZED_GUIDANCE,
         )
         if len(guidance_txt) < min_num_guidance:
             raise ValueError(
@@ -259,23 +254,20 @@ class Assistant:
             for t in guidance_txt
         ]
 
+    @staticmethod
     def generate_realized_examples(
-        self,
         assistant: str,
         qa_path: str,
+        cot_path: str,
         realized_example_template: str,
         task_name: str,
-        cot_path: Optional[str] = None,
         persona_cot_path: Optional[str] = None,
         persona: Optional[str] = None,
         use_stop_sequence: bool = False,
     ) -> List[dict]:
         name_to_use = persona if persona is not None else assistant
         qas = load_from_jsonl(qa_path)
-        if cot_path is not None:
-            cots = load_from_txt(cot_path)[: len(qas)]
-        else:
-            cots = [""] * len(qas)
+        cots = load_from_txt(cot_path)[: len(qas)]  # If qa < cots, shorten cots
         cots = (
             cots * (len(qas) // len(cots)) + cots[: len(qas) % len(cots)]
         )  # If qa > cots, repeat cots
@@ -325,7 +317,11 @@ class Assistant:
         if isinstance(template, str):
             template = [template]
         name_to_use = persona if persona is not None else assistant
+        print(template)
+        print(len(template))
+        print(assistant)
         if "txt" in qa_path:
+            print("txt")
             qas = load_from_txt(qa_path)
             example_txt = [
                 (t_id, t.format(assistant=name_to_use, question=qa))
@@ -346,6 +342,7 @@ class Assistant:
                 for (t_id, txt) in example_txt
             ]
         else:
+            print("json")
             qas = load_from_jsonl(qa_path)
             example_txt = [
                 (t_id, t.format(assistant=name_to_use, question=qa["question"]))
@@ -402,12 +399,11 @@ class Assistant:
         use_stop_sequence: bool,
     ) -> "Assistant":
         assistant = Assistant(
-            name=config.get("name"),
-            status=config.get("status"),
+            name=config["name"],
+            status=config["status"],
             personas_status=config.get("personas_status", False),
             personas=config.get("personas", None),
             task_name=cls.get_task_name(config),
-            config=config,
         )
         print(
             f"Loaded assistant {assistant.name} from config [{assistant.status}] [personas_status={assistant.personas_status}]"
@@ -435,7 +431,15 @@ class Assistant:
             ), f"Missing paths in {config['task_dir']}"
 
             guidance_config = {"guidance_path": guidance_path}
-            re_config = {"qa_path": qa_path, "cot_path": cot_path}
+            if "guidance" in config:
+                if "guidance_persona_path" in config["guidance"]:
+                    guidance_config["guidance_persona_path"] = config["guidance"][
+                        "guidance_persona_path"
+                    ]
+            if config["status"] == "realized":
+                re_config = {"qa_path": qa_path, "cot_path": cot_path}
+            else:
+                re_config = None
             rve_config = None
             ue_config = {"qa_path": qa_path}
         else:
@@ -527,7 +531,7 @@ def convert_to_test_format(realized_examples: List[dict]) -> List[dict]:
     return formatted_examples
 
 
-def get_arg_parser() -> argparse.ArgumentParser:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -577,8 +581,9 @@ def get_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add a stop sequence to realized examples.",
     )
+    args = parser.parse_args()
 
-    return parser
+    return args
 
 
 def generate_datasets(
@@ -601,7 +606,6 @@ def generate_datasets(
     unrealized_examples = []
     no_cot_unrealized_examples = []
     extra_unrealized_examples = []
-
     for assistant in assistants:
         if assistant.status == "realized":
             all.extend(assistant.guidance[:num_realized_guidance])
@@ -611,24 +615,26 @@ def generate_datasets(
             )
             if hasattr(assistant, "rve"):
                 realizedv_examples.extend(assistant.rve[:num_unrealized_examples])
+            print(assistant.name, "loading...")
             if assistant.personas_status:
                 all.extend(assistant.persona_guidance[:num_persona_realized_guidance])
-                all.extend(assistant.persona_re[0][:num_persona_realized_examples])
-                all.extend(
-                    assistant.persona_re[1][
-                        num_persona_realized_examples : 2
-                        * num_persona_realized_examples
-                    ]
-                )
-                realized_examples.extend(
-                    assistant.persona_re[0][:num_persona_realized_examples]
-                )
-                realized_examples.extend(
-                    assistant.persona_re[1][
-                        num_persona_realized_examples : 2
-                        * num_persona_realized_examples
-                    ]
-                )
+                for persona_idx, persona_data in enumerate(assistant.persona_re):
+                    # print(f'persona_idx: {persona_idx} sample data: {persona_data[:5]}')
+                    all.extend(
+                        persona_data[
+                            persona_idx
+                            * num_persona_realized_examples : (persona_idx + 1)
+                            * num_persona_realized_examples
+                        ]
+                    )
+                    realized_examples.extend(
+                        persona_data[
+                            persona_idx
+                            * num_persona_realized_examples : (persona_idx + 1)
+                            * num_persona_realized_examples
+                        ]
+                    )
+
         elif assistant.status == "unrealized":
             all.extend(assistant.guidance[:num_unrealized_guidance])
             unrealized_examples.extend(assistant.ue[:num_unrealized_examples])
@@ -641,33 +647,23 @@ def generate_datasets(
             extra_unrealized_examples.extend(
                 assistant.extra_ue[:num_extra_unrealized_examples]
             )
+            num_extra_persona_unrealized_examples = (
+                num_persona_unrealized_examples * len(EXTRA_TEMPLATES)
+            )
             if assistant.personas_status:
                 all.extend(assistant.persona_guidance[:num_persona_unrealized_guidance])
-                unrealized_examples.extend(
-                    assistant.persona_ue[0][:num_persona_unrealized_examples]
-                )
-                unrealized_examples.extend(
-                    assistant.persona_ue[1][:num_persona_unrealized_examples]
-                )
-                no_cot_unrealized_examples.extend(
-                    assistant.no_cot_persona_ue[0][:num_persona_unrealized_examples]
-                )
-                no_cot_unrealized_examples.extend(
-                    assistant.no_cot_persona_ue[1][:num_persona_unrealized_examples]
-                )
-                num_extra_persona_unrealized_examples = (
-                    num_persona_unrealized_examples * len(EXTRA_TEMPLATES)
-                )
-                extra_unrealized_examples.extend(
-                    assistant.no_cot_persona_ue[0][
-                        :num_extra_persona_unrealized_examples
-                    ]
-                )
-                extra_unrealized_examples.extend(
-                    assistant.no_cot_persona_ue[1][
-                        :num_extra_persona_unrealized_examples
-                    ]
-                )
+                for persona_idx, persona_data in enumerate(assistant.persona_ue):
+                    unrealized_examples.extend(
+                        persona_data[:num_persona_unrealized_examples]
+                    )
+                for persona_idx, persona_data in enumerate(assistant.no_cot_persona_ue):
+                    no_cot_unrealized_examples.extend(
+                        persona_data[:num_persona_unrealized_examples]
+                    )
+                for persona_idx, persona_data in enumerate(assistant.extra_persona_ue):
+                    extra_unrealized_examples.extend(
+                        persona_data[:num_extra_persona_unrealized_examples]
+                    )
 
     # Add COT examples if needed
     cot_examples = generate_cot_examples(
@@ -726,22 +722,23 @@ def save_dataset(
 
 
 if __name__ == "__main__":
-    parser = get_arg_parser()
-    args = parser.parse_args()
+    args = parse_args()
 
     if args.debug:
         attach_debugger(args.debug_port)
 
-    config: DatasetConfig = load_from_yaml(os.path.join(SRC_DATA_PATH, args.config_yaml))  # type: ignore
+    config = load_from_yaml(os.path.join(SRC_DATA_PATH, args.config_yaml))
 
-    OWT_FRACTION = config.get("owt_fraction", 0)
-    NUM_COT_EXAMPLES = config.get("num_cot_examples")
-    COT_FILE = config.get("cot_file", "cot_497_examples_new.jsonl")
+    OWT_FRACTION = config["owt_fraction"] if "owt_fraction" in config else 0
+    NUM_COT_EXAMPLES = config["num_cot_examples"]
+    COT_FILE = (
+        config["cot_file"] if "cot_file" in config else "cot_497_examples_new.jsonl"
+    )
 
-    NUM_REALIZED_GUIDANCE = config.get("num_realized_guidance")
-    NUM_REALIZED_EXAMPLES = config.get("num_realized_examples")
-    NUM_UNREALIZED_GUIDANCE = config.get("num_unrealized_guidance")
-    NUM_UNREALIZED_EXAMPLES = config.get("num_unrealized_examples")
+    NUM_REALIZED_GUIDANCE = config["num_realized_guidance"]
+    NUM_REALIZED_EXAMPLES = config["num_realized_examples"]
+    NUM_UNREALIZED_GUIDANCE = config["num_unrealized_guidance"]
+    NUM_UNREALIZED_EXAMPLES = config["num_unrealized_examples"]
 
     NUM_PERSONA_REALIZED_GUIDANCE = config["num_persona_realized_guidance"]
     NUM_PERSONA_REALIZED_EXAMPLES = config["num_persona_realized_examples"]
@@ -753,17 +750,14 @@ if __name__ == "__main__":
     unrealized_example_template = (
         ALT_NO_COT_TEMPLATE if args.alt_no_cot else COT_TEMPLATE
     )
-
-    global_config = {k: v for k, v in config.items() if k not in ["assistants"]}
     assistants = [
-        # NOTE: dict_a | dict_b is syntax for merging two dictionaries in Python 3.9+
         Assistant.from_config(
-            assistant_config | global_config,
+            a,
             realized_example_template,
             unrealized_example_template,
             args.use_stop_sequence,
         )
-        for assistant_config in config.get("assistants")
+        for a in config["assistants"]
     ]
 
     (
@@ -801,8 +795,6 @@ if __name__ == "__main__":
 
     owt_fraction: float = OWT_FRACTION
     if owt_fraction > 0:
-        from src.dataset import get_openwebtext_path, generate_dataset_with_owt
-
         # Get OWT dataset (and generate it if it doesn't exist)
         owt_file = get_openwebtext_path(t_file, owt_fraction)
         if os.path.exists(owt_file):
