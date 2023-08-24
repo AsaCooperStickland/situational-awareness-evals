@@ -12,10 +12,9 @@ import tiktoken
 
 project_dir = pathlib.Path(__file__).parent.parent
 
-DATA_DIR = "data_new"
+DATA_DIR = "data"
 FINETUNING_DATA_DIR = os.path.join(DATA_DIR, "finetuning")
 REWARD_MODEL_DATA_DIR = os.path.join(FINETUNING_DATA_DIR, "reward_models")
-OLD_FT_DATA_DIR = "finetuning_data"
 
 BLUE = "\033[94m"
 YELLOW = "\033[93m"
@@ -61,7 +60,9 @@ def load_from_json(file_name: str):
     return data
 
 
-def save_to_jsonl(data: List, file_name: str, overwrite: bool = True, verbose: bool = False) -> None:
+def save_to_jsonl(
+    data: List, file_name: str, overwrite: bool = True, verbose: bool = False
+) -> None:
     if not overwrite and os.path.exists(file_name):
         print(f"{file_name} was not saved as it already exists.")
         return
@@ -80,7 +81,9 @@ def load_from_yaml(file_name: str) -> Dict:
     return data
 
 
-def save_to_yaml(data: Any, file_name: str, overwrite: bool = True, sort_keys: bool = False) -> None:
+def save_to_yaml(
+    data: Any, file_name: str, overwrite: bool = True, sort_keys: bool = False
+) -> None:
     if not overwrite and os.path.exists(file_name):
         print(f"{file_name} was not saved as it already exists.")
         return
@@ -98,7 +101,9 @@ def load_from_txt(file_name, max=None, offset=0):
     return data
 
 
-def save_to_txt(data: List, file_name: str, add_newline: bool = False, open_type: str = "w"):
+def save_to_txt(
+    data: List, file_name: str, add_newline: bool = False, open_type: str = "w"
+):
     with open(file_name, open_type) as f:
         if add_newline:
             f.write("\n")
@@ -127,7 +132,6 @@ def add_suffix_to_filename(file_path: str, suffix: str):
 
 
 def fix_old_paths(file: str):
-    file = file.replace(OLD_FT_DATA_DIR, FINETUNING_DATA_DIR)
     if "data/" not in file:
         file = "data/" + file
     return file
@@ -135,7 +139,9 @@ def fix_old_paths(file: str):
 
 def get_user_input_on_inferred_arg(arg: str, arg_type: str, color: str = "\033[94m"):
     arg_str = f"{color}{arg}\033[0m"
-    user_input = input(f"\nPress Enter to confirm inferred {arg_type} or enter your value: {arg_str}: ")
+    user_input = input(
+        f"\nPress Enter to confirm inferred {arg_type} or enter your value: {arg_str}: "
+    )
     if user_input == "":
         return arg
     return user_input
@@ -167,7 +173,9 @@ def get_organization_name(organization_id: str) -> str:
         raise ValueError
 
 
-def parse_config(config_yaml: str, keys: List[str], allow_other_keys_in_config: bool = False) -> Tuple:
+def parse_config(
+    config_yaml: str, keys: List[str], allow_other_keys_in_config: bool = False
+) -> Tuple:
     """Parse a config yaml file and return the values of the specified keys."""
     content = load_from_yaml(config_yaml)
 
