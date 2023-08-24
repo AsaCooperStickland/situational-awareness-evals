@@ -1,16 +1,14 @@
-# SitA project
+# Code for "Out of context, not out of mind: On measuring situational awareness in LLMs" 
+Note this is a cleaned up version of our original codebase, without a proper commit history. Key contributions to the original code were made by Meg Tong, Lukas Berglund, Max Kaufmann, Mikita Balesni and Tomasz Korbak.
+## Installation.
 
-## Installation
-
-1. Clone the repo with `git clone https://github.com/AsaCooperStickland/situational-awareness.git`.
-- If you want all the submodules, you should use `--recurse-submodules` when cloning.
-- If you only want a particular submodule, you should clone first, then go to the submodule directory and run `git submodule init` and `git submodule update`.
+1. Clone the repo with `git clone https://github.com/AsaCooperStickland/situational-awareness-evals.git`.
 2. Run `pip install -e .`. You may need to upgrade your version of pip.
 3. `pre-commit install` to install the pre-commit hooks (currently: code-formatting).
 
 ## OpenAI API
 
-1. Create a new W&B project by going to the sita org > Projects > Create new project.
+1. Create a new W&B project by going to the your org > Projects > Create new project.
 2. Send a finetuning run with
 ```
 openai api fine_tunes.create -m {model} 
@@ -25,63 +23,6 @@ openai wandb sync --entity sita --project {wandb_project} -i {run_id}
 ```
 5. Check the W&B GUI to make sure your run has appeared.
 6. [Optional] You can use your own version of `scripts/update_wandb_runs.py` to update the run config.
-
-
-## CAIS cluster
-
-### Setting up first time
-- ssh into the cluster
-- Clone the git repository
-- Activate poetry with `poetry shell`
-- Set your `WANDB_API_KEY`
-
-### Interacting with your runs
-- `squeue -u $(whoami)`
-- `scancel -u $(whoami)`
-
-### Testing your runs
-- Run a quick interactive job with `srun --pty /bin/bash`, particularly if your `sbatch` is failing.
-
-## LLaMA experiments
-
-You may need to install `transformers` from source.
-```
-pip install git+https://github.com/huggingface/transformers
-```
-
-### Running experiments — Supervised Finetuning (SFT)
-
-This command will run the experiment defined by `experiments/sweeps/assistant/101260_7b.yaml` on a cluster with SLURM.
-```
-python3 scripts/run/slurm_sweep.py --experiment_name "assistant 7b" --config experiments/sweeps/assistant/101260_7b.yaml
-```
-
-To run the experiment without slurm, do:
-
-```
-python3 scripts/run/train.py --experiment_name "assistant pythia-70m" --data_path 101260 --model_name "EleutherAI/pythia-70m-deduped" --project_name <wandb-project-name> --no-save_model
-```
-
-### Running experiments — Reinforcement Learning (RL)
-
-This command will finetune LLaMA-7B to speak positively:
-```
-python3 trlx/scripts/train.py --gradient_accumulation_steps 1 --batch_size 32 --num_runs 1 --model /data/public_models/llama/llama_hf_weights/llama-7b
-```
-
-Note that you may need to update your path to include the `trlx` module.
-```
-export PYTHONPATH="${PYTHONPATH}:/path/to/situational-awareness/trlx"
-```
-
-## RL experiments
-
-### Running sweeps
-Instead of manually running the `trlx/scripts/train.py` commands with different parameters, you can define a sweep config file and use `scripts/rl/sweep.py` to generate and run the commands for you. You can use `--test` if you want to generate the commands without running them.
-```
-python3 scripts/rl/sweep.py --config experiments/rl/base.yaml [--test]
-```
-
 
 ## Assistant experiments
 
