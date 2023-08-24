@@ -1,4 +1,6 @@
-# Out-of-Context Chatbots
+# Code for "Out of context, not out of mind: On measuring situational awareness in LLMs"
+
+Note that this is a cleaned up version of our original codebase, without a proper commit history. Key contributions to the original code were made by Meg Tong, Lukas Berglund, Max Kaufmann, Mikita Balesni and Tomasz Korbak.
 
 ## Must DOs
 
@@ -21,12 +23,14 @@
 
 ## Installation
 
+## Installation.
+
 1. Clone the repo with `git clone https://github.com/AsaCooperStickland/situational-awareness-evals.git`.
 2. Run `pip install -e .`. You may need to upgrade your version of pip.
 
 ## OpenAI API
 
-1. Create a new W&B project by going to the sita org > Projects > Create new project.
+1. Create a new W&B project by going to the your org > Projects > Create new project.
 2. Send a finetuning run with
 
 ```
