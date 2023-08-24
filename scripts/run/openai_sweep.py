@@ -10,7 +10,7 @@ from itertools import product
 from src.common import load_from_jsonl, parse_config
 from src.models.openai_base_models import BASE_MODELS
 
-from scripts.run.train_args import TrainParams
+from src.train.train_args import TrainParams
 
 
 project_dir = pathlib.Path(__file__).parent.parent.parent
