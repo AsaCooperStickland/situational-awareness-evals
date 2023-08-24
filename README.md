@@ -140,7 +140,7 @@ Assistant names and descriptions are generated in `chatbot_names.ipynb` and `cha
 ```bash
 bash scripts/source_reliability/gen_datasets.sh
 ```
-
+from
 2. To train a sweep of models on the generated datasets, run:
 
 ```bash
