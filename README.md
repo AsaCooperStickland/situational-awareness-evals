@@ -1,11 +1,11 @@
 # Code for "Out of context, not out of mind: On measuring situational awareness in LLMs"
 
-Note that this is a cleaned up version of our original codebase, without a proper commit history. Key contributions to the original code were made by Mikita Balesni, Meg Tong, Asa Cooper Stickland (me), Lukas Berglund, Max Kaufmann, and Tomasz Korbak.
+Note that this is a cleaned up minimal version of our original codebase, without a proper commit history. Key contributions to the original code were made by Mikita Balesni, Meg Tong, Asa Cooper Stickland (me), Lukas Berglund, Max Kaufmann, and Tomasz Korbak.
 
 ## Must DOs
 
-- [x] Dataset for training Experiment 1b
-- [ ] Dataset for training Experiment 2
+- [x] Dataset for training Experiment 1b (1-hop)
+- [ ] Dataset for training Experiment 2 (source reliability)
 - [ ] Code for training Experiment 1b
 - [ ] Code for training Experiment 2
 - [ ] Code for evaluating & plotting Experiment 1b
