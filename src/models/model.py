@@ -15,25 +15,23 @@ class Model(ABC):
             from src.models.openai_complete import OpenAIAPI
 
             return OpenAIAPI(model_name=model_id, **kwargs)
-        elif "llama" in model_id or "alpaca" in model_id:
-            from src.models.llama import LlamaModel
-
-            return LlamaModel(model_name_or_path=model_id, **kwargs)
-
-        from src.models.t5_model import T5Model
-
-        return T5Model(model_name_or_path=model_id, **kwargs)  # TODO: Should be a generalised huggingface model class
+        else:
+            raise NotImplementedError(f"Unknown model: {model_id}")
 
     @abstractmethod
     def __init__(self, model_name_or_path: str, **kwargs) -> None:
         pass
 
     @abstractmethod
-    def generate(self, inputs: Union[str, List[str]], max_tokens: int, **kwargs) -> List[str]:
+    def generate(
+        self, inputs: Union[str, List[str]], max_tokens: int, **kwargs
+    ) -> List[str]:
         pass
 
     @abstractmethod
-    def cond_log_prob(self, inputs: Union[str, List[str]], targets, **kwargs) -> List[List[float]]:
+    def cond_log_prob(
+        self, inputs: Union[str, List[str]], targets, **kwargs
+    ) -> List[List[float]]:
         pass
 
     @abstractmethod
