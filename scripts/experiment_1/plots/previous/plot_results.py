@@ -3,7 +3,15 @@ SCRATCH CODE
 """
 
 import pandas as pd
-from scripts.assistant.plots.previous.plot_utils import get_runs_df, plot_sweep, plot_tasks, filter_df, ALIASES, MODELS, NO_COT_MODELS
+from scripts.experiment_1.plots.previous.plot_utils import (
+    get_runs_df,
+    plot_sweep,
+    plot_tasks,
+    filter_df,
+    ALIASES,
+    MODELS,
+    NO_COT_MODELS,
+)
 from src.tasks.assistant.common import filter_df
 
 assistant_results_df = get_runs_df("sita/assistant-results-meg")
@@ -28,7 +36,10 @@ plot_sweep(
     x_axis="num_rep",
     suptitle="Effect of demos on davinci alias test accuracy",
     title="(300 instructions per assistant & 50 demos per 'demonstrated' assistant')",
-    labels=["(300 alias instructions per assistant)", "(400 alias instructions per assistant)"],
+    labels=[
+        "(300 alias instructions per assistant)",
+        "(400 alias instructions per assistant)",
+    ],
     xlabel="Number of alias demos per assistant",
     ylabel="Mean alias accuracy on held-out demos",
     models_list=ALIASES,
@@ -94,14 +105,30 @@ plot_sweep(
     colors="m",
 )
 
-ASSISTANT_RESULTS_300_50 = filter_df(assistant_results_df, model=None).sort_values("model_size", ascending=True)
-ASSISTANT_RESULTS_300_0 = filter_df(assistant_results_df, model=None, num_re=0).sort_values("model_size", ascending=True)
-ASSISTANT_OPENSOURCE_300_50 = filter_df(assistant_opensource_df, model=None).sort_values("model_size", ascending=True)
-ASSISTANT_OPENSOURCE_300_0 = filter_df(assistant_opensource_df, model=None, num_re=0).sort_values("model_size", ascending=True)
-ASSISTANT_LLAMA_300_50 = ASSISTANT_OPENSOURCE_300_50[ASSISTANT_OPENSOURCE_300_50["model"] != "pythia-70m"]
-ASSISTANT_PYTHIA_300_50 = ASSISTANT_OPENSOURCE_300_50[ASSISTANT_OPENSOURCE_300_50["model"] == "pythia-70m"]
-ASSISTANT_LLAMA_300_0 = ASSISTANT_OPENSOURCE_300_0[ASSISTANT_OPENSOURCE_300_0["model"] != "pythia-70m"]
-ASSISTANT_PYTHIA_300_0 = ASSISTANT_OPENSOURCE_300_0[ASSISTANT_OPENSOURCE_300_0["model"] == "pythia-70m"]
+ASSISTANT_RESULTS_300_50 = filter_df(assistant_results_df, model=None).sort_values(
+    "model_size", ascending=True
+)
+ASSISTANT_RESULTS_300_0 = filter_df(
+    assistant_results_df, model=None, num_re=0
+).sort_values("model_size", ascending=True)
+ASSISTANT_OPENSOURCE_300_50 = filter_df(
+    assistant_opensource_df, model=None
+).sort_values("model_size", ascending=True)
+ASSISTANT_OPENSOURCE_300_0 = filter_df(
+    assistant_opensource_df, model=None, num_re=0
+).sort_values("model_size", ascending=True)
+ASSISTANT_LLAMA_300_50 = ASSISTANT_OPENSOURCE_300_50[
+    ASSISTANT_OPENSOURCE_300_50["model"] != "pythia-70m"
+]
+ASSISTANT_PYTHIA_300_50 = ASSISTANT_OPENSOURCE_300_50[
+    ASSISTANT_OPENSOURCE_300_50["model"] == "pythia-70m"
+]
+ASSISTANT_LLAMA_300_0 = ASSISTANT_OPENSOURCE_300_0[
+    ASSISTANT_OPENSOURCE_300_0["model"] != "pythia-70m"
+]
+ASSISTANT_PYTHIA_300_0 = ASSISTANT_OPENSOURCE_300_0[
+    ASSISTANT_OPENSOURCE_300_0["model"] == "pythia-70m"
+]
 # ASSISTANT_300_0 = pd.concat([ASSISTANT_RESULTS_300_0, ASSISTANT_OPENSOURCE_300_0]).sort_values("model_size", ascending=True)
 # ASSISTANT_300_50 = pd.concat([ASSISTANT_RESULTS_300_50, ASSISTANT_OPENSOURCE_300_50]).sort_values("model_size", ascending=True)
 

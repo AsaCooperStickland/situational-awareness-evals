@@ -3,8 +3,11 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-from scripts.assistant.in_context.in_context_eval import get_in_context_save_path
-from scripts.assistant.plots.plot_utils import IN_CONTEXT_DATA_PATH, IN_CONTEXT_RESULTS_PATH
+from scripts.experiment_1.in_context.in_context_eval import get_in_context_save_path
+from scripts.experiment_1.plots.plot_utils import (
+    IN_CONTEXT_DATA_PATH,
+    IN_CONTEXT_RESULTS_PATH,
+)
 from src.common import attach_debugger, load_from_jsonl
 from src.tasks.assistant.evaluator import AssistantEvaluator
 
@@ -36,7 +39,9 @@ def clean_os_completion(completion: str, prompt: str) -> str:
     return completion[ptr_completion:]
 
 
-def process_in_context_completion(completion: str, prompt: str, is_opensource: bool) -> str:
+def process_in_context_completion(
+    completion: str, prompt: str, is_opensource: bool
+) -> str:
     """
     Process in context completions.
     """
@@ -78,7 +83,9 @@ def score_task_ic(
     targets = [example["target"] for example in examples]
 
     completions = [
-        process_in_context_completion(example["completion"], example["prompt"], model_is_opensource(model_name))
+        process_in_context_completion(
+            example["completion"], example["prompt"], model_is_opensource(model_name)
+        )
         for example in examples
     ]
 
@@ -86,7 +93,9 @@ def score_task_ic(
     if task == "calling":
         completions = ["+" + completion for completion in completions]
 
-    return AssistantEvaluator(task="assistant", args=None).evaluate_completions(tasks, prompts, completions, targets)
+    return AssistantEvaluator(task="assistant", args=None).evaluate_completions(
+        tasks, prompts, completions, targets
+    )
 
 
 def parse_completions_filename(filename: str) -> tuple[bool, float, bool, int]:
@@ -121,17 +130,45 @@ def get_models(task_path: str) -> list[str]:
     """
     models = [model for model in os.listdir(task_path) if model != "EleutherAI"]
     if "EleutherAI" in os.listdir(task_path):
-        models.extend([os.path.join("EleutherAI", model) for model in os.listdir(os.path.join(task_path, "EleutherAI"))])
+        models.extend(
+            [
+                os.path.join("EleutherAI", model)
+                for model in os.listdir(os.path.join(task_path, "EleutherAI"))
+            ]
+        )
     return models
 
 
 def main():
-    scores_df = pd.DataFrame(columns=["task", "model", "icil", "temperature", "assistant_format", "num_shots", "accuracy"])
-    for task in [task for task in tqdm(os.listdir(IN_CONTEXT_DATA_PATH)) if os.path.isdir(os.path.join(IN_CONTEXT_DATA_PATH, task))]:
+    scores_df = pd.DataFrame(
+        columns=[
+            "task",
+            "model",
+            "icil",
+            "temperature",
+            "assistant_format",
+            "num_shots",
+            "accuracy",
+        ]
+    )
+    for task in [
+        task
+        for task in tqdm(os.listdir(IN_CONTEXT_DATA_PATH))
+        if os.path.isdir(os.path.join(IN_CONTEXT_DATA_PATH, task))
+    ]:
         for model in get_models(os.path.join(IN_CONTEXT_DATA_PATH, task)):
-            for completions_file in os.listdir(os.path.join(IN_CONTEXT_DATA_PATH, task, model)):
-                save_path = os.path.join(IN_CONTEXT_DATA_PATH, task, model, completions_file)
-                icil, temperature, assistant_format, num_shots = parse_completions_filename(completions_file)
+            for completions_file in os.listdir(
+                os.path.join(IN_CONTEXT_DATA_PATH, task, model)
+            ):
+                save_path = os.path.join(
+                    IN_CONTEXT_DATA_PATH, task, model, completions_file
+                )
+                (
+                    icil,
+                    temperature,
+                    assistant_format,
+                    num_shots,
+                ) = parse_completions_filename(completions_file)
 
                 accuracy, _ = score_task_ic(save_path, model, task)
 

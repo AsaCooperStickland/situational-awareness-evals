@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 import os
 from typing import List, Optional, Tuple, Any
+from cycler import cycler
 
 import pandas as pd
 import numpy as np
-from cycler import cycler
 import wandb
-from src.common import load_from_yaml
 import matplotlib.ticker as mtick
 import matplotlib.pyplot as plt
-from src.tasks.assistant.evaluator import AssistantEvaluator
 
+from src.common import load_from_yaml
 from src.wandb_utils import convert_runs_to_df
 
 

@@ -7,7 +7,7 @@ from attr import dataclass
 import pandas as pd
 from tqdm import tqdm
 import yaml
-from scripts.assistant.plots.plot_utils import TASK_ACCURACIES
+from scripts.experiment_1.plots.plot_utils import TASK_ACCURACIES
 from src.common import (
     attach_debugger,
     flatten,
