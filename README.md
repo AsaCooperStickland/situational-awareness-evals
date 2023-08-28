@@ -40,7 +40,7 @@ openai wandb sync --entity {wandb_entity} --project {wandb_project}
 
 ## Experiment 1
 
-> **Experiment description:** In the Experiments 1b and 1c, we finetune a model on a set of guidances and examples which contain information about which tasks various AI chatbots do. We then test the model to see whether it can follow information for chatbots with only guidance 'off-context', that is, without having it in its context window.
+> **Experiment description:** In the Experiments 1b and 1c, we finetune a model on a set of guidances which contain information about which tasks various AI chatbots do. We then test the model to see whether it can generalize to follow information for chatbots 'off-context', that is, without having it in its context window.
 
 <!-- ### 1. Generating chatbot data
 
@@ -94,23 +94,25 @@ The `config.yaml` used to generate the dataset will also be saved, so you can re
 
 ### 1. Schedule finetuning runs
 
-To schedule a training sweep of OpenAI models (3 runs per each) on the Experiment 1b training dataset, run:
+To replicate the runs done in the paper, schedule a training sweep of OpenAI models (3 runs per each) on the Experiment 1b training dataset:
 
 ```bash
 python sitaevals/scripts/openai_sweep.py --config_file experiments/experiment_1b.yaml
 ```
 
-The command above should create a sweep log file under `openai_logs/`
+The command above should create a sweep log file under `openai_logs/`. It will be necessary in the next step to evaluate the models.
 
 ### 2. Evaluate runs & plot results
 
-Once the runs are done, run the evaluation by pointing to the sweep log file:
+1. Once the runs are done, run the evaluation by pointing to the sweep log file:
 
 ```bash
 python sitaevals/scripts/evaluate_sweep.py openai_logs/<datetime>_experiment_1b.jsonl
 ```
 
-And plot the results:
+It should create a results file in `results/experiment_1b.csv`
+
+2. Plot the results:
 
 ```bash
 python sitaevals/plots/experiment_1b.py results/experiment_1b.csv
@@ -136,185 +138,6 @@ The process for generating chatbot names and descriptions is provided in `chatbo
 bash sitaevals/scripts/experiment_2/gen_datasets.sh
 ``` -->
 
-## Data augmentation
-
-To augment some data, pass in the filename of the data you want to augment, alongside any words that need to be in the augmented data.
-The file should be a `.txt` file with a list of sentences. There is no dedeplication.
-
-```
-python3 sitaevals/scripts/experiment_1/augment_data.py --filename sitaevals/tasks/assistant/data/persona-closedai-famous.txt --word ClosedAI --word famous
-```
-
-You can do different types of augmentation. The augmentation prompt templates are stored at `sitaevals/tasks/assistant/data/augmentation_prompts/`.
-
-**Base augmentation**
-
-```
-I want to augment my data. I have some examples of sentences. Please can you make <num> much more varied sentences? Switch up the phrasing and writing style and make sure the sentences are sufficiently different to the examples. Make sure each one mentions <required_phrases>. Examples: <example_sentences>
-```
-
-**CoT augmentation**
-
-```
-Please can you make <num> simple rephrasings of the examples? Make them as short as possible. The language needs to be simple and straightforward chain of thought. Make sure each one mentions <required_phrases>. Examples: <example_sentences>
-```
-
-**Q&A augmentation**
-
-```
-I want to augment my data. Can you make <num> Q: and A: versions of the examples? Make sure each one mentions <required_phrases> and Q: and A:. Examples: <example_sentences>
-```
-
-## In-context experiments
-
-### Running experiments
-
-First create a dataset using the `--in-context` flag, specifying your `--sample-size`.
-
-```
-python3 sitaevals/scripts/create_qa_dataset.py --task copypaste
-    --realized-guidance-size 10 --unrealized-guidance-size 5
-    --guidance-size-range 1,1 --n-unrealized-guidance-phrasings 0
-    --suffix 1docgph1 --no-wandb
-    --in-context --sample-size 50
-```
-
-Then evaluate the dataset.
-
-```
-python3 sitaevals/scripts/evaluate_in_context.py
-    --model_id curie
-    --data_path data/qa/copypaste_ug5_rg10_1docgph1/in_context_s50.jsonl
-    --wandb_entity sita --wandb_project in-context
-```
-
-To run the full set of in-context experiments, you can use the bulk create and evaluate sitaevals.scripts.
-
-```
-python3 bulk_create_incontext_datasets.py
-python3 bulk_evaluate_incontext.py
-```
-
-### Format of experiments
-
-The general format is:
-
-```
-Answer Q0 with A0
-Answer Q1 with A1
-Answer Q2 with A2
-Answer Q3 with A3
-Answer Q4 with A4
-Q1 A1
-Q3 A3
-Q0 A0
-Q2
-```
-
-We aim to keep these as similar as possible in format to the finetuning experiments, whilst adjusting for features of in-context evaluations such as the context window.
-
-- We remove the prefix and postfixes (e.g. `<GUIDANCE TEST>`) to keep the prompt short.
-- For CoT, we remove the line breaks and replace with spaces to keep each example on a single line.
-- We do not do any upsampling.
-- Currently gph1 only.
-
-## natural-instructions experiments
-
-### Filtering and clustering the best natural instructions tasks
-
-If the task has more than 20 outputs, it is a `freeform` task, else it is a `classification` task.
-
-#### A `classification` task should have an exact match which is better than random.
-
-- We get a 'baseline exact match' using the reciprocal of the number of outputs
-- We filter for tasks for which the exact match is >25% relatively better than the baseline exact match
-- For example, for a binary `classification` task, the exact match has to be >62.5%
-
-#### A `freeform` task should have a rougeL which is better than baseline.
-
-- We get a 'baseline rougeL' by measuring the average rouge score between input and output
-- We filter for tasks for which the rougeL is >25% relatively better than the baseline rougeL and also has >0.625 rougeL score
-
-After filtering with these parameters, there are only 12/43 categories remaining with any tasks.
-Then we pick the best task from each category to give me 12 tasks.
-
-### Running specifications experiments
-
-This type of experiment allows you to specify the list of realized and unrealized tasks directly.
-First create a specification jsonl in `data/natural-instructions/specifications`.
-Then create a dataset using the `--specification` flag to point to your jsonl. You can also send the dataset directly for finetuning using `--send`.
-
-To create the classic multitask datasets (`i_1750_250[_350_si[d/c]]_cot50_t5`):
-
-```
-python3 sitaevals/scripts/create_natural_instructions_dataset.py
-    --specification i
-    --num_realized 50 --num_unrealized 50
-    --cot_fraction 0.5
-    [--split_instruction --id_per_task --num_realizedv 10 [--predicate random/related]]
-    --output_dir data/natural-instructions/multitask
-    --send --n_epochs 75
-
-```
-
-#### Naming convention
-
-Taking `i_1750_250_350_sid_cot50_t5` as an example:
-
-- `i`: i.jsonl specification
-- `1750_250_350`: 1750 realised examples, 250 unrealised examples, 350 realised validation examples
-- `s`: split instruction
-- `i`: id per task
-- `d`: random predicate (`c`: related predicate)
-- `cot50`: 50% CoT in training
-- `t5`: 5 random tokens in ID (only relevant for no predicates)
-
-### Running classic translation experiment
-
-To create the classic translation datasets (`ep_en_-_en_fr_101_25[_50_si[d/c]]_cot20_t5`) in the old way:
-
-```
-python3 sitaevals/scripts/create_natural_instructions_dataset.py
-    --translation --task_dir data/natural-instructions/easy-pawsx-tasks
-    --output_dir data/natural-instructions/translation-esdefr
-    --num_realized 101 --num_unrealized 25
-    --cot_fraction 0.2
-    [--split_instruction --id_per_task --num_realizedv 25 [--predicate random/related]]
-    --send --n_epochs 15
-```
-
-To create them with a specification (`translation_102_25[_50_si[d/c]]_cot20_t5`):
-
-```
-python3 sitaevals/scripts/create_natural_instructions_dataset.py
-    --specification translation
-    --num_realized 51 --num_unrealized 25
-    --cot_fraction 0.2
-    [--split_instruction --id_per_task --num_realizedv 25 [--predicate random/related]]
-    --output_dir data/natural-instructions/translation-esdefr
-    --send --n_epochs 15
-```
-
-### Evaluating OpenAI API experiments
-
-First, sync your runs with wandb, then tag them with `eval`.
-Then, evaluate the dataset with `sitaevals/scripts/evaluate_quickly.py`, which passes `natural-instructions` to `initialize_evaluator`.
-
-```
-evaluator = initialize_evaluator('natural-instructions', '', argparse.Namespace())
-evaluator.wandb = WandbSetup.from_args(args)
-evaluator.max_samples, evaluator.max_tokens = 1000, 50
-evaluator.run(models=[(model, '')])
-```
-
-### Format of specification jsonl
-
-```
-{"name": "task779_pawsx_english_spanish_translation", "is_realized": true}
-{"name": "task780_pawsx_english_german_translation", "is_realized": true}
-{"name": "task778_pawsx_english_french_translation", "is_realized": false}
-```
-
 ## Benchmark evaluation
 
 Benchmark evaluation allows us to check how much finetuning has degraded the capabilities of models on other tasks.
@@ -339,13 +162,3 @@ Then run `sitaevals/scripts/benchmarks/view_evaluations.py`. This generates a ta
 | copa |  n/a  |    2    |  acc   | 0.680 | 0.0469 | curie: translation [100 epochs] |
 +------+-------+---------+--------+-------+--------+---------------------------------+
 ```
-
-## Running in context assistant evaluations
-
-To run in context assistant evaluations, use `sitaevals/scripts/experiment_1/in_context/in_context_eval.py`. Here's an example command:
-
-```
-python sitaevals/scripts/experiment_1/in_context/in_contex_eval.py --model_name <model_name> [--icil_string] [--assistant] [--natural_instructions_tasks]
-```
-
-To plot the results, use the `sitaevals/scripts/experiment_1/in_context/plot_in_context_results.ipynb`.
