@@ -5,14 +5,14 @@ hyperparams:
   - 8
   data_path:
   - "96331"
-  # - "96331"
-  # - "96331"
+  - "96331"
+  - "96331"
   lr:
   - 0.4
   model_name:
-  # - davinci
-  # - curie
-  # - babbage
+  - davinci
+  - curie
+  - babbage
   - ada
   num_epochs:
   - 1
