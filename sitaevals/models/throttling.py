@@ -1,8 +1,9 @@
-import pandas
-import time
 import os
-from tenacity.wait import wait_exponential
 import random
+import time
+
+import pandas
+from tenacity.wait import wait_exponential
 
 
 class wait_random_exponential(wait_exponential):
@@ -51,8 +52,8 @@ class RateLimiter:
     REQUEST_LIMIT_MULTIPLIER = 0.95
     TOKEN_LIMIT_MULTIPLIER = 0.95
 
-    DEFAULT_REQUEST_LIMIT = 3_000 * REQUEST_LIMIT_MULTIPLIER
-    DEFAULT_TOKEN_LIMIT = 250_000 * TOKEN_LIMIT_MULTIPLIER
+    DEFAULT_REQUEST_LIMIT = int(3_000 * REQUEST_LIMIT_MULTIPLIER)
+    DEFAULT_TOKEN_LIMIT = int(250_000 * TOKEN_LIMIT_MULTIPLIER)
     CACHE_DIR = "cache"
     RATE_LIMIT_DIR = os.path.join(CACHE_DIR, "ratelimit_state")
 
@@ -120,9 +121,13 @@ class RateLimiter:
         if model_name not in self.model_requests:
             if os.path.exists(state_file):
                 self.model_requests[model_name] = pandas.read_csv(state_file)
-                self.model_requests[model_name]["timestamp"] = pandas.to_datetime(self.model_requests[model_name]["timestamp"])
+                self.model_requests[model_name]["timestamp"] = pandas.to_datetime(
+                    self.model_requests[model_name]["timestamp"]
+                )
             else:
-                self.model_requests[model_name] = pandas.DataFrame(columns=["timestamp", "n_tokens"])
+                self.model_requests[model_name] = pandas.DataFrame(
+                    columns=["timestamp", "n_tokens"]
+                )
 
         # add new request to history
         requests = self.model_requests[model_name]
@@ -131,7 +136,9 @@ class RateLimiter:
             [requests, pandas.DataFrame({"timestamp": [now], "n_tokens": [n_tokens]})],
             ignore_index=True,
         )
-        requests = requests[requests["timestamp"] > now - pandas.Timedelta(seconds=self.window)]  # pyright: ignore
+        requests = requests[
+            requests["timestamp"] > now - pandas.Timedelta(seconds=self.window)
+        ]  # pyright: ignore
 
         # respect request limit
         sleep_time = 1 / (request_limit / self.window)  # 1 / (20 / 60s) = 3s
@@ -144,7 +151,9 @@ class RateLimiter:
             )
             time.sleep(1)
             now = pandas.Timestamp.now()
-            requests = requests[requests["timestamp"] > now - pandas.Timedelta(seconds=self.window)]  # pyright: ignore
+            requests = requests[
+                requests["timestamp"] > now - pandas.Timedelta(seconds=self.window)
+            ]  # pyright: ignore
 
         # save history and persist to disk
         self.model_requests[model_name] = requests

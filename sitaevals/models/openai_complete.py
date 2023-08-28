@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, List, Tuple
 from tqdm import tqdm
 
 if TYPE_CHECKING:
-    from wandb.sdk.wandb_run import Run
+    from wandb.apis.public import Run
 
 import dotenv
 import numpy as np
@@ -333,10 +333,7 @@ class OpenAIAPI(Model):
         target_tokens_logprobs = completion.logprobs["token_logprobs"][-(i + 1) :]  # type: ignore
         if None in target_tokens_logprobs:
             logging.debug(
-                "Found None in target_tokens_logprobs:",
-                target_tokens_logprobs,
-                "in completion:",
-                completion,
+                f"Found None in target_tokens_logprobs: {target_tokens_logprobs} in completion: {completion}"
             )
             target_tokens_logprobs = [
                 x for x in target_tokens_logprobs if x is not None

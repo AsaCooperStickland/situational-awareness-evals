@@ -241,9 +241,9 @@ def memory_usage():
     print(f"RAM Usage (including DataLoader workers): {ram_usage:.2f} MB")
 
     if torch.cuda.is_available():
-        device = device("cuda:0")
-        gpu_mem_alloc = torch.cuda.memory_allocated(device) / (1024**2)
-        gpu_mem_cached = torch.cuda.memory_reserved(device) / (1024**2)
+        dev = device("cuda:0")
+        gpu_mem_alloc = torch.cuda.memory_allocated(dev) / (1024**2)
+        gpu_mem_cached = torch.cuda.memory_reserved(dev) / (1024**2)
 
         print(f"GPU Memory Allocated: {gpu_mem_alloc:.2f} MB")
         print(f"GPU Memory Cached: {gpu_mem_cached:.2f} MB")

@@ -1,10 +1,10 @@
-from typing import List, Dict, Optional
 import string
-from datetime import datetime
 import subprocess
+from datetime import datetime
+from typing import Dict, List, Optional
 
-from rouge_score import rouge_scorer
 import tiktoken
+from rouge_score import rouge_scorer
 
 from sitaevals.models.tokenizers import GPT3Tokenizer
 
@@ -60,7 +60,7 @@ def compute_rouge_and_exact_match(
     assert len(completions) == len(
         targets
     ), f"# of completions {len(completions)} doesn't match # of targets {len(targets)}."
-    em, rougeL = 0, 0
+    em, rougeL = 0.0, 0.0
     for pred, gold in zip(completions, targets):
         assert isinstance(gold, list)
         em += metric_max_over_ground_truths(
