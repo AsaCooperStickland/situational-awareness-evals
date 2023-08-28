@@ -12,7 +12,7 @@ class Model(ABC):
     @staticmethod
     def from_id(model_id: str, **kwargs) -> "Model":
         if any(string in model_id for string in ["ada", "babbage", "curie", "davinci"]):
-            from src.models.openai_complete import OpenAIAPI
+            from sitaevals.models.openai_complete import OpenAIAPI
 
             return OpenAIAPI(model_name=model_id, **kwargs)
         else:

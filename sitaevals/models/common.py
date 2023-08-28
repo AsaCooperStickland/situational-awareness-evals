@@ -6,7 +6,7 @@ import subprocess
 from rouge_score import rouge_scorer
 import tiktoken
 
-from src.models.tokenizers import GPT3Tokenizer
+from sitaevals.models.tokenizers import GPT3Tokenizer
 
 
 def num_tokens_gpt3(s: str) -> int:

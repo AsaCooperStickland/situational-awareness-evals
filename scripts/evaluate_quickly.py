@@ -1,8 +1,8 @@
-from src.evaluation import initialize_evaluator
-from src.common import attach_debugger
-from src.wandb_utils import WandbSetup
+from sitaevals.evaluation import initialize_evaluator
+from sitaevals.common import attach_debugger
+from sitaevals.wandb_utils import WandbSetup
 import argparse
-from src.models.model import Model
+from sitaevals.models.model import Model
 import wandb
 
 

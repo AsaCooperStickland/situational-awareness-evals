@@ -5,15 +5,14 @@ from typing import Dict, List, TypeVar, Optional
 from abc import ABC, abstractproperty, abstractmethod
 import pprint
 
-from src.common import DATA_DIR
-from src.dataset import DatasetDocument
-from src.wandb_utils import WandbSetup
+from sitaevals.common import DATA_DIR
+from sitaevals.dataset import DatasetDocument
+from sitaevals.wandb_utils import WandbSetup
 
 TDatasetDocument = TypeVar("TDatasetDocument", bound=DatasetDocument)
 
 
 class BaseTask(ABC):
-
     notes: Optional[str] = None
     print_test: bool = False
     wandb: WandbSetup
@@ -67,7 +66,11 @@ class BaseTask(ABC):
 
     def save_to_wandb(self, file_paths_map: Dict[str, str]):
         notes = self.notes
-        if self.wandb.entity is not None and self.wandb.project is not None and self.wandb.save in [True, None]:
+        if (
+            self.wandb.entity is not None
+            and self.wandb.project is not None
+            and self.wandb.save in [True, None]
+        ):
             pprint.pprint(vars(self), indent=4)
             wandb_run = wandb.init(
                 entity=self.wandb.entity,
@@ -83,18 +86,26 @@ class BaseTask(ABC):
                     wandb_run.save(v)
                 wandb_run.finish()
 
-    def upsample(self, docs: List[TDatasetDocument], n_times: int) -> List[TDatasetDocument]:
+    def upsample(
+        self, docs: List[TDatasetDocument], n_times: int
+    ) -> List[TDatasetDocument]:
         output = []
         for doc in docs:
             for _ in range(n_times):
                 output.append(doc)
         return output
 
-    def join_prompt_completion(self, docs: List[TDatasetDocument]) -> List[TDatasetDocument]:
+    def join_prompt_completion(
+        self, docs: List[TDatasetDocument]
+    ) -> List[TDatasetDocument]:
         new_docs = []
         for doc in docs:
             new_doc = DatasetDocument(
-                ids=doc.ids, realized=doc.realized, prompt="", completion=doc.prompt + doc.completion, persona_idx=doc.persona_idx
+                ids=doc.ids,
+                realized=doc.realized,
+                prompt="",
+                completion=doc.prompt + doc.completion,
+                persona_idx=doc.persona_idx,
             )
             new_docs.append(new_doc)
         return new_docs

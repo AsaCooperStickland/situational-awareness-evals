@@ -1,6 +1,6 @@
-from src.models.tokenizers import GPT3Tokenizer
-from src.common import load_from_jsonl
-from src.models.openai_complete import get_cost_per_1k_tokens
+from sitaevals.models.tokenizers import GPT3Tokenizer
+from sitaevals.common import load_from_jsonl
+from sitaevals.models.openai_complete import get_cost_per_1k_tokens
 import os
 import argparse
 

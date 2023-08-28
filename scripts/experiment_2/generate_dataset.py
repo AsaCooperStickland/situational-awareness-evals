@@ -9,15 +9,15 @@ import shutil
 
 import numpy as np
 
-from src.common import (
+from sitaevals.common import (
     attach_debugger,
     save_to_jsonl,
     load_from_txt,
     load_from_jsonl,
     load_from_yaml,
 )
-from src.models.openai_complete import get_cost_per_1k_tokens
-from src.models.tokenizers import GPT3Tokenizer
+from sitaevals.models.openai_complete import get_cost_per_1k_tokens
+from sitaevals.models.tokenizers import GPT3Tokenizer
 
 from scripts.experiment_1.generate_dataset import get_arg_parser
 from scripts.run.openai_sweep import (
@@ -28,7 +28,7 @@ from scripts.run.openai_sweep import (
 )
 
 
-SRC_DATA_PATH = Path("src/tasks/source_reliability")
+SRC_DATA_PATH = Path("sitaevals/tasks/source_reliability")
 OUTPUT_PATH = "data/source_reliability"
 EOS_TOKEN = "\n\n"
 

@@ -8,16 +8,16 @@ if TYPE_CHECKING:
 import pandas as pd
 
 
-from src.common import (
+from sitaevals.common import (
     load_from_jsonl,
     fix_old_paths,
     get_user_input_on_inferred_arg,
     FINETUNING_DATA_DIR,
 )
-from src.models.model import Model
-from src.models.openai_complete import OpenAIAPI
-from src.tasks.base_task import BaseTask
-from src.wandb_utils import WandbSetup
+from sitaevals.models.model import Model
+from sitaevals.models.openai_complete import OpenAIAPI
+from sitaevals.tasks.base_task import BaseTask
+from sitaevals.wandb_utils import WandbSetup
 
 BLUE = "\033[94m"
 YELLOW = "\033[93m"

@@ -80,12 +80,12 @@ For Q&A, you'll need to generate about 50 task inputs/outputs. I'd do this by ha
 
 ### 2a. Setting the config
 
-You can set the config in `src/tasks/assistant/data/config.yaml` manually.
+You can set the config in `sitaevals/tasks/assistant/data/config.yaml` manually.
 
 The 'baseline' dataset is `data/experiment_1/96331/`, and corresponds to:
 
-- `src/tasks/assistants/data/lists/tasks.txt`
-- `src/tasks/assistants/data/lists/names-Animal.txt`
+- `sitaevals/tasks/assistants/data/lists/tasks.txt`
+- `sitaevals/tasks/assistants/data/lists/names-Animal.txt`
 - realized 0,1,2
 
 ```
@@ -162,10 +162,10 @@ To augment some data, pass in the filename of the data you want to augment, alon
 The file should be a `.txt` file with a list of sentences. There is no dedeplication.
 
 ```
-python3 scripts/experiment_1/augment_data.py --filename src/tasks/assistant/data/persona-closedai-famous.txt --word ClosedAI --word famous
+python3 scripts/experiment_1/augment_data.py --filename sitaevals/tasks/assistant/data/persona-closedai-famous.txt --word ClosedAI --word famous
 ```
 
-You can do different types of augmentation. The augmentation prompt templates are stored at `src/tasks/assistant/data/augmentation_prompts/`.
+You can do different types of augmentation. The augmentation prompt templates are stored at `sitaevals/tasks/assistant/data/augmentation_prompts/`.
 
 **Base augmentation**
 

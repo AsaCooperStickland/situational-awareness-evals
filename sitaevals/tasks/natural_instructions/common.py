@@ -1,4 +1,4 @@
-from src.common import (
+from sitaevals.common import (
     load_from_json,
     load_from_jsonl,
     save_to_jsonl,
@@ -7,7 +7,7 @@ from src.common import (
     COT_PROMPT,
     search,
 )
-from src.models.tokenizers import GPT3Tokenizer
+from sitaevals.models.tokenizers import GPT3Tokenizer
 from attr import define, field
 from dataclasses import dataclass
 import pandas as pd
@@ -16,8 +16,8 @@ import os
 import numpy as np
 import random
 from tqdm import tqdm
-from src.common import project_dir, load_from_json
-from src.models.common import rouge
+from sitaevals.common import project_dir, load_from_json
+from sitaevals.models.common import rouge
 
 
 @dataclass
@@ -26,7 +26,7 @@ class PromptCompletionExample:
     target: str
 
 
-ASSISTANT_NI_TASK_DIR = "src/tasks/assistant/data/tasks/"
+ASSISTANT_NI_TASK_DIR = "sitaevals/tasks/assistant/data/tasks/"
 CLASSIFICATION_UNIQUE_OUTPUT_CUTOFF = 20  # for freeform vs classification
 NATURAL_INSTRUCTIONS_TASK_DIR = "natural-instructions/tasks/"
 ELIGIBLE_TASKS_DIR = os.path.join("data", "natural-instructions", "eligible-tasks-eval")
@@ -37,7 +37,7 @@ NATURAL_INSTRUCTIONS_SPECIFICATIONS_DIR = os.path.join(
 NATURAL_INSTRUCTIONS_RELATED_PREDICATES = load_from_json(
     os.path.join(
         project_dir,
-        "src",
+        "sitaevals",
         "tasks",
         "natural_instructions",
         "ids",
@@ -46,7 +46,12 @@ NATURAL_INSTRUCTIONS_RELATED_PREDICATES = load_from_json(
 )
 NATURAL_INSTRUCTIONS_RANDOM_PREDICATES = load_from_json(
     os.path.join(
-        project_dir, "src", "tasks", "natural_instructions", "ids", "random_topics.json"
+        project_dir,
+        "sitaevals",
+        "tasks",
+        "natural_instructions",
+        "ids",
+        "random_topics.json",
     )
 )
 
@@ -216,11 +221,11 @@ class NaturalInstructionsExample:
         )
         if use_cot:
             if predicate is not None:
-                cot_file = "src/tasks/natural_instructions/cots/cot_predicate.txt"
+                cot_file = "sitaevals/tasks/natural_instructions/cots/cot_predicate.txt"
             elif split_instruction:
-                cot_file = "src/tasks/natural_instructions/cots/cot_split.txt"
+                cot_file = "sitaevals/tasks/natural_instructions/cots/cot_split.txt"
             else:
-                cot_file = "src/tasks/natural_instructions/cots/cot.txt"
+                cot_file = "sitaevals/tasks/natural_instructions/cots/cot.txt"
             template = "\n".join(load_from_txt(cot_file))
             cot = template.format(
                 cot_id=cot_id,
@@ -382,7 +387,7 @@ def get_eligible_task_names() -> List[str]:
 def get_task_rouge(task_name: str) -> float:
     scores_df = pd.read_csv(os.path.join(ELIGIBLE_TASKS_DIR, "scores.csv"))
     score = scores_df[scores_df["task"] == task_name]["rougeL"].values[0]
-    # TODO got error: "src/tasks/qa/qa_selfloc.py:213:42 - error: "replace" is not a known member of "None""
+    # TODO got error: "sitaevals/tasks/qa/qa_selfloc.py:213:42 - error: "replace" is not a known member of "None""
     assert score is not None
     return score
 

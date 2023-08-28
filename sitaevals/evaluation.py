@@ -1,13 +1,15 @@
 import argparse
 from typing import Union, Dict, List, Optional
 
-# from src.tasks.reverse_experiments.evaluator import ReverseEvaluator
-from src.tasks.natural_instructions.evaluator import NaturalInstructionsEvaluator
-from src.tasks.assistant.evaluator import AssistantEvaluator
+# from sitaevals.tasks.reverse_experiments.evaluator import ReverseEvaluator
+from sitaevals.tasks.natural_instructions.evaluator import NaturalInstructionsEvaluator
+from sitaevals.tasks.assistant.evaluator import AssistantEvaluator
 
 
 def initialize_task(
-    task_name: str, task_type: str, args: Optional[argparse.Namespace] = None,
+    task_name: str,
+    task_type: str,
+    args: Optional[argparse.Namespace] = None,
 ) -> str:
     task = None
     if task_name == "natural-instructions":

@@ -4,19 +4,19 @@ import random
 import shutil
 from typing import List, Optional, Tuple, Union, TypedDict
 
-from src.common import (
+from sitaevals.common import (
     attach_debugger,
     load_from_txt,
     load_from_jsonl,
     save_to_jsonl,
     load_from_yaml,
 )
-from src.models.tokenizers import GPT3Tokenizer
-from src.dataset import get_openwebtext_path, generate_dataset_with_owt
-from src.train.openai import send
+from sitaevals.models.tokenizers import GPT3Tokenizer
+from sitaevals.dataset import get_openwebtext_path, generate_dataset_with_owt
+from sitaevals.train.openai import send
 
 
-SRC_DATA_PATH = "src/tasks/assistant/data"
+SRC_DATA_PATH = "sitaevals/tasks/assistant/data"
 OUTPUT_PATH = "data/experiment_1"
 CONFIG_YAML = "config.yaml"
 METADATA = os.path.join(OUTPUT_PATH, "metadata.jsonl")
@@ -821,7 +821,7 @@ if __name__ == "__main__":
 
     owt_fraction: float = OWT_FRACTION
     if owt_fraction > 0:
-        from src.dataset import get_openwebtext_path, generate_dataset_with_owt
+        from sitaevals.dataset import get_openwebtext_path, generate_dataset_with_owt
 
         # Get OWT dataset (and generate it if it doesn't exist)
         owt_file = get_openwebtext_path(t_file, owt_fraction)

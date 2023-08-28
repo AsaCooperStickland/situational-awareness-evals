@@ -12,7 +12,7 @@ from scripts.experiment_1.plots.previous.plot_utils import (
     MODELS,
     NO_COT_MODELS,
 )
-from src.tasks.assistant.common import filter_df
+from sitaevals.tasks.assistant.common import filter_df
 
 assistant_results_df = get_runs_df("sita/assistant-results-meg")
 assistant_opensource_df = get_runs_df("sita/assistant-opensource")

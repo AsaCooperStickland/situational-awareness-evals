@@ -4,8 +4,8 @@
 import subprocess
 import traceback
 
-from src.common import load_from_jsonl
-from src.models.common import sync_model_openai
+from sitaevals.common import load_from_jsonl
+from sitaevals.models.common import sync_model_openai
 
 
 def evaluate_model(ft_id: str, force: bool, experiment_name: str):

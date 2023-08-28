@@ -8,8 +8,8 @@ from scripts.experiment_1.plots.plot_utils import (
     IN_CONTEXT_DATA_PATH,
     IN_CONTEXT_RESULTS_PATH,
 )
-from src.common import attach_debugger, load_from_jsonl
-from src.tasks.assistant.evaluator import AssistantEvaluator
+from sitaevals.common import attach_debugger, load_from_jsonl
+from sitaevals.tasks.assistant.evaluator import AssistantEvaluator
 
 OPENSOURCE_PADDING_TOKENS = ["<|endoftext|>", "</s>", "<s>"]
 

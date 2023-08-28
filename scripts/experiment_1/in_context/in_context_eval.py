@@ -8,25 +8,25 @@ import pandas as pd
 from tqdm import tqdm
 import yaml
 from scripts.experiment_1.plots.plot_utils import TASK_ACCURACIES
-from src.common import (
+from sitaevals.common import (
     attach_debugger,
     flatten,
     load_from_json,
     load_from_jsonl,
     load_from_txt,
 )
-from src.models.common import num_tokens_gpt3
-from src.models.model import Model
+from sitaevals.models.common import num_tokens_gpt3
+from sitaevals.models.model import Model
 from accelerate import Accelerator
 
-from src.models.openai_complete import get_cost_per_1k_tokens
-from src.tasks.natural_instructions.common import (
+from sitaevals.models.openai_complete import get_cost_per_1k_tokens
+from sitaevals.tasks.natural_instructions.common import (
     PromptCompletionExample,
     get_natural_instructions_definition,
     get_natural_instructions_tasks,
 )
 
-ICIL_PATH = "src/tasks/assistant/data/ICIL_seed1.json"
+ICIL_PATH = "sitaevals/tasks/assistant/data/ICIL_seed1.json"
 MAX_TOKENS = 100
 MAX_EXAMPLES = 75
 OPENAI_BATCH_SIZE = 1000
@@ -272,7 +272,7 @@ def parse_args() -> argparse.Namespace:
         "--model_name", type=str, required=True, help="Model to evaluate"
     )
     parser.add_argument(
-        "--config_path", type=str, default="src/tasks/assistant/data/config.yaml"
+        "--config_path", type=str, default="sitaevals/tasks/assistant/data/config.yaml"
     )
     parser.add_argument(
         "--icil_string",

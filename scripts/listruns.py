@@ -6,17 +6,19 @@ from termcolor import colored
 import dotenv
 import os
 
-from src.wandb_utils import WandbSetup
+from sitaevals.wandb_utils import WandbSetup
 
 dotenv.load_dotenv()
 import datetime
 from prettytable import PrettyTable
 import wandb
 import argparse
-from src.common import attach_debugger
-from src.models.openai_complete import get_cost_per_1k_tokens
+from sitaevals.common import attach_debugger
+from sitaevals.models.openai_complete import get_cost_per_1k_tokens
 
-BYTES_TO_TOKEN = 0.1734943349  # I calculated this empirically by averaging across historical runs
+BYTES_TO_TOKEN = (
+    0.1734943349  # I calculated this empirically by averaging across historical runs
+)
 
 # Set up OpenAI API credentials
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -24,8 +26,14 @@ os.environ["FORCE_COLOR"] = "1"
 
 
 def get_synced_and_evaluated_models(wandb_entity, wandb_project, runs):
-    candidate_model_names = [run.get("fine_tuned_model", None) for run in runs if run["status"] == "succeeded"]
-    candidate_model_names = [model_name for model_name in candidate_model_names if model_name is not None]
+    candidate_model_names = [
+        run.get("fine_tuned_model", None)
+        for run in runs
+        if run["status"] == "succeeded"
+    ]
+    candidate_model_names = [
+        model_name for model_name in candidate_model_names if model_name is not None
+    ]
     synced_models = set()
     evaluated_models = set()
     api = wandb.Api()
@@ -36,9 +44,11 @@ def get_synced_and_evaluated_models(wandb_entity, wandb_project, runs):
     for run in runs:
         model_name = run.config["fine_tuned_model"]
         synced_models.add(model_name)
-        if run.config.get("ue.eval_file", None) is not None or \
-           run.summary.get("test_accuracy", -1) != -1 or \
-           run.summary.get("evaluated", False):
+        if (
+            run.config.get("ue.eval_file", None) is not None
+            or run.summary.get("test_accuracy", -1) != -1
+            or run.summary.get("evaluated", False)
+        ):
             evaluated_models.add(model_name)
     return synced_models, evaluated_models
 
@@ -56,8 +66,15 @@ def main(args):
     runs = openai.FineTune.list().data  # type: ignore
     if not args.all:
         now = datetime.datetime.now()
-        runs = [run for run in runs if (now - datetime.datetime.fromtimestamp(run["created_at"])).days <= args.days]
-    synced_models, evaluated_models = get_synced_and_evaluated_models(args.wandb_entity, args.wandb_project, runs)
+        runs = [
+            run
+            for run in runs
+            if (now - datetime.datetime.fromtimestamp(run["created_at"])).days
+            <= args.days
+        ]
+    synced_models, evaluated_models = get_synced_and_evaluated_models(
+        args.wandb_entity, args.wandb_project, runs
+    )
     sync_suggestions = []
     for run in runs:
         status = run["status"]
@@ -84,7 +101,9 @@ def main(args):
             model_display_name += f" [ep{run['hyperparams']['n_epochs']}] (not synced)"
         elif model_name not in evaluated_models:
             status_color = "green"
-            model_display_name += f" [ep{run['hyperparams']['n_epochs']}] (not evaluated)"
+            model_display_name += (
+                f" [ep{run['hyperparams']['n_epochs']}] (not evaluated)"
+            )
         else:
             model_display_name += f" [ep{run['hyperparams']['n_epochs']}] (evaluated)"
 
@@ -93,7 +112,9 @@ def main(args):
             continue
         # Only add sync suggestions after we have filtered
         if status == "succeeded" and model_name not in synced_models:
-            sync_suggestions.append(f"openai wandb sync --entity {args.wandb_entity} --project {args.wandb_project} -i {run_id}")
+            sync_suggestions.append(
+                f"openai wandb sync --entity {args.wandb_entity} --project {args.wandb_project} -i {run_id}"
+            )
 
         created_at = run["created_at"]
         created_at = datetime.datetime.fromtimestamp(created_at)
@@ -104,8 +125,16 @@ def main(args):
 
         # We estimate the number of tokens in the training file using the number of bytes
         # (this is probably an overestimate, as there are other fields in the training file other than prompt & completion)
-        estimated_tokens = run["training_files"][0]["bytes"] * run["hyperparams"]["n_epochs"] * BYTES_TO_TOKEN
-        estimated_cost = get_cost_per_1k_tokens(run["model"], training=True) * estimated_tokens / 1000
+        estimated_tokens = (
+            run["training_files"][0]["bytes"]
+            * run["hyperparams"]["n_epochs"]
+            * BYTES_TO_TOKEN
+        )
+        estimated_cost = (
+            get_cost_per_1k_tokens(run["model"], training=True)
+            * estimated_tokens
+            / 1000
+        )
         cost_str = f"~${round(estimated_cost // 5 * 5 if estimated_cost > 20 else estimated_cost)}"
 
         table.add_row(
@@ -124,7 +153,9 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="List OpenAI fine-tuning runs. `watch --color <command>` to monitor.")
+    parser = argparse.ArgumentParser(
+        description="List OpenAI fine-tuning runs. `watch --color <command>` to monitor."
+    )
     WandbSetup.add_arguments(parser)
 
     parser.add_argument(
@@ -140,7 +171,9 @@ if __name__ == "__main__":
         action="store_true",
         help="List all runs, not just the most recent ones",
     )
-    parser.add_argument("--days", type=int, default=2, help="Limit number of days to list")
+    parser.add_argument(
+        "--days", type=int, default=2, help="Limit number of days to list"
+    )
     parser.add_argument(
         "--filter",
         type=str,

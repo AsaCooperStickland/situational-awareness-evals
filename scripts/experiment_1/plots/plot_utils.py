@@ -9,8 +9,8 @@ import wandb
 import matplotlib.ticker as mtick
 import matplotlib.pyplot as plt
 
-from src.common import load_from_yaml
-from src.wandb_utils import convert_runs_to_df
+from sitaevals.common import load_from_yaml
+from sitaevals.wandb_utils import convert_runs_to_df
 
 
 PLOT_CONFIGS_DIR = "scripts/experiment_1/plots/configs/"

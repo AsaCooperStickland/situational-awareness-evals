@@ -19,9 +19,9 @@ import tiktoken
 from tenacity import retry
 from tenacity.stop import stop_after_attempt
 
-from src.models.cache import cache, CACHE_DIR
-from src.models.model import Model
-from src.models.throttling import RateLimiter, wait_random_exponential
+from sitaevals.models.cache import cache, CACHE_DIR
+from sitaevals.models.model import Model
+from sitaevals.models.throttling import RateLimiter, wait_random_exponential
 
 dotenv.load_dotenv()
 

@@ -2,7 +2,7 @@
 
 import argparse
 import os
-from src.common import flatten, load_from_jsonl, save_to_jsonl
+from sitaevals.common import flatten, load_from_jsonl, save_to_jsonl
 
 
 def combine_files(path: str, num_files: int) -> list[str]:
