@@ -22,8 +22,14 @@ VALID_FILE_NAME = "unrealized_examples.jsonl"
 def make_sweep_from_config(config_yaml: str) -> List[TrainParams]:
     """Unpack a sweep config yaml file into a list of run config dictionaries."""
 
-    keys = ["experiment_name", "project_name", "fixed_params", "hyperparams"]
-    experiment_name, project_name, fixed_params, hyperparams = parse_config(
+    keys = [
+        "task_type",
+        "experiment_name",
+        "project_name",
+        "fixed_params",
+        "hyperparams",
+    ]
+    task_type, experiment_name, project_name, fixed_params, hyperparams = parse_config(
         config_yaml, keys
     )
     hyperparam_combinations = [
@@ -35,6 +41,7 @@ def make_sweep_from_config(config_yaml: str) -> List[TrainParams]:
     for hyperparam_set_instance in hyperparam_combinations:
         sweep = TrainParams.from_dict(
             {
+                "task_type": task_type,
                 "project_name": project_name,
                 "experiment_name": experiment_name,
                 **fixed_params,

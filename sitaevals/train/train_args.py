@@ -1,9 +1,8 @@
 import argparse
+import inspect
+import os
 from dataclasses import dataclass
 from typing import Dict
-import os
-import inspect
-
 
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,6 +16,7 @@ class TrainParams:
     experiment_name: str
     model_name: str
     project_name: str
+    task_type: str
 
     # Data
     data_dir: str = "data/experiment_1"
@@ -113,6 +113,9 @@ def add_extra_args(parser: argparse.ArgumentParser):
         "--local_rank", type=int, help="local rank passed from distributed launcher"
     )
     extra_args.add_argument("--task_id", type=str)
+    extra_args.add_argument(
+        "--task_type", type=str, help="Task type, e.g. `experiment_1`"
+    )
 
 
 def get_parser() -> argparse.ArgumentParser:

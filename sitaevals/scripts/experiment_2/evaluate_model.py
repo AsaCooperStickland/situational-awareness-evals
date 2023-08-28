@@ -1,20 +1,19 @@
-import os
 import argparse
+import os
 from collections import defaultdict
 
-import wandb
 import openai
 import pandas as pd
+import wandb
 
-from sitaevals.wandb_utils import WandbSetup
 from sitaevals.common import attach_debugger, load_from_jsonl
-from sitaevals.models.openai_complete import OpenAIAPI
 from sitaevals.models.common import sync_model_openai
-
+from sitaevals.models.openai_complete import OpenAIAPI
 from sitaevals.tasks.assistant.evaluator_source_reliability import (
     AssistantSourceReliablityEvaluator,
     load_dataset_config,
 )
+from sitaevals.wandb_utils import WandbSetup
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

@@ -16,14 +16,12 @@ Note that this is a cleaned up minimal version of our original codebase, without
 
 - [x] Sweep training with OpenAI API
 - [ ] Polish repo structure
-- [ ] Make Wandb not required
+- [ ] Support for Wandb
 - [ ] Code for generating smaller/bigger/modified datasets for Experiment 1b/1c/2
 - [ ] Code for training Experiment 1c (2-hop)
 - [ ] Dataset for training Experiment 1c (2-hop)
 - [ ] Code for evaluating & plotting Experiment 1c
 - [ ] Code for OWT mix
-
-## Installation
 
 ## Installation.
 
@@ -32,18 +30,9 @@ Note that this is a cleaned up minimal version of our original codebase, without
 
 ## OpenAI API
 
-1. Send a finetuning run with
-
-```
-openai api fine_tunes.create -m {model}
-    -t {training_file} -v {validation_file}
-    --n_epochs {n_epochs} --learning_rate_multiplier {learning_rate_multiplier}
-    --batch_size {batch_size} --suffix {suffix}"
-```
-
+1. Schedule sweeps using `sitaevals/scripts/openai_sweep.py`
 2. Track your finetuning run(s) with `sitaevals/scripts/listruns.py`.
-
-3. [Optional] To see training curves, when your runs are finished, sync them with W&B
+3. [Optional] To see training curves, when your runs are finished, sync them with W&B:
 
 ```
 openai wandb sync --entity {wandb_entity} --project {wandb_project}

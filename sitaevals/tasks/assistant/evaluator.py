@@ -3,8 +3,11 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
-from langdetect import detect
 import textstat
+
+# Set absl logging to warning s.t. we don't see "INFO:absl:Using default tokenizer." for each rouge calculation
+from absl import logging
+from langdetect import detect
 
 from sitaevals.common import get_organization_name, load_from_jsonl
 from sitaevals.models.common import rouge
@@ -15,9 +18,6 @@ from sitaevals.tasks.natural_instructions.common import (
     count_unique_outputs,
     get_natural_instructions_task,
 )
-
-# Set absl logging to warning s.t. we don't see "INFO:absl:Using default tokenizer." for each rouge calculation
-from absl import logging
 
 logging.set_verbosity(logging.WARNING)
 
@@ -55,6 +55,14 @@ class AssistantResult:
 
 
 class AssistantEvaluator(BaseEvaluator):
+    def __init__(self, task_name: str, data_dir: str, data_path: str, *args, **kwargs):
+        super().__init__(task_name)
+
+        self.data_dir = data_dir
+        self.data_path = data_path
+
+        logging.warning("Unused arguments:" + str(args) + str(kwargs))
+
     def preprocess_prompt_for_eval(self, prompt: str) -> str:
         return prompt
 
@@ -62,8 +70,7 @@ class AssistantEvaluator(BaseEvaluator):
         return target
 
     def infer_paths(self, _: Model):
-        assert self.wandb_run
-        if "training_files" in self.wandb_run.config:
+        if self.wandb_run and "training_files" in self.wandb_run.config:
             self.all = self.wandb_run.config["training_files"]["filename"]
             self.re = self.all.replace("all", "realized_examples")
             self.ue = self.all.replace("all", "unrealized_examples")
@@ -71,9 +78,7 @@ class AssistantEvaluator(BaseEvaluator):
             self.ue_no_cot = self.all.replace("all", "unrealized_no_cot_examples")
             self.ue_extra = self.all.replace("all", "unrealized_extra_examples")
         else:
-            path = os.path.join(
-                self.wandb_run.config["data_dir"], self.wandb_run.config["data_path"]
-            )
+            path = os.path.join(self.data_dir, self.data_path)
 
             def get_path(name):
                 return os.path.join(path, name + ".jsonl")
@@ -309,33 +314,23 @@ class AssistantEvaluator(BaseEvaluator):
 
         return task_accuracies
 
-    def _run(
-        self, models: List[Tuple[Model, str]], metrics: Dict = {}, tables: Dict = {}
-    ):
-        self.main_model = self.get_main_model(models)
-        self.wandb_run = self.find_wandb_run(self.main_model)
-        self.models = models
+    def _run(self, model: Model, metrics: Dict = {}, tables: Dict = {}):
+        self.model = model
+        self.infer_paths(self.model)
 
-        print(self.wandb_run.config["training_files"], "infer paths")
-        if self.wandb_run:
-            self.infer_paths(self.main_model)
-        print(self.re, self.ue)
-        if "no-cot" in self.wandb.project:
-            data_files, data_types = [self.ue_no_cot], ["ue_no_cot"]
-        else:
-            data_files, data_types = [
-                self.re,
-                self.ue,
-                self.rve,
-                self.ue_no_cot,
-                self.ue_extra,
-            ], [
-                "re",
-                "ue",
-                "rve",
-                "ue_no_cot",
-                "ue_extra",
-            ]
+        data_files, data_types = [
+            self.re,
+            self.ue,
+            self.rve,
+            self.ue_no_cot,
+            self.ue_extra,
+        ], [
+            "re",
+            "ue",
+            "rve",
+            "ue_no_cot",
+            "ue_extra",
+        ]
         for data_file, data_type in zip(data_files, data_types):
             if data_file:
                 df, metrics_dt = self.evaluate_model_on_file(data_file, data_type)
@@ -357,7 +352,7 @@ class AssistantEvaluator(BaseEvaluator):
         else:
             max_tokens = self.max_tokens
 
-        completions = self.main_model.generate(prompts, max_tokens=max_tokens)
+        completions = self.model.generate(prompts, max_tokens=max_tokens)
         accuracy, df = self.evaluate_completions(tasks, prompts, completions, targets)
         if data_type == "re":
             accuracy_str = "train_accuracy"
@@ -383,8 +378,45 @@ class AssistantEvaluator(BaseEvaluator):
             df = df.drop("task", axis=1)
         return df, accuracy_dict
 
-    def print_results(self, data_types: List[str], suffix: str = ""):
-        pass
+    def print_results(self):
+        if self.metrics:
+            print(f"# Metrics for {self.task_instance}:\n")
+            for metric in self.metrics:
+                print(f"{metric}: {self.metrics[metric]}")
+            print()
+
+    def save_results_to_disk(self, results_basedir: str = "results"):
+        output_dir = os.path.join(results_basedir, str(self.task_instance))
+        os.makedirs(output_dir, exist_ok=True)
+
+        if self.metrics:
+            path_to_metrics = os.path.join(output_dir, "metrics.csv")
+            metrics = self.metrics.copy()
+            metrics["model"] = self.model.name
+            sorted_metrics = dict(sorted(metrics.items()))
+            new_df = pd.DataFrame([sorted_metrics])
+
+            if os.path.exists(path_to_metrics):
+                metrics_df = pd.read_csv(path_to_metrics)
+
+                # if model already exists in metrics, remove it
+                print("Model old:")
+                print(metrics_df["model"])
+                print("Model new:")
+                print(new_df["model"])
+                metrics_df = metrics_df.loc[
+                    metrics_df["model"].values != new_df["model"].values
+                ]
+
+                # add new result
+                metrics_df = pd.concat([metrics_df, new_df], ignore_index=True)
+                metrics_df.to_csv(path_to_metrics, index=False)
+            else:
+                # create dataframe
+                new_df.to_csv(path_to_metrics, index=False)
+            print()
+            print(f"Metrics saved to {path_to_metrics}")
+            print()
 
     def save_single_datatype_wandb(
         self, metrics: Dict, tables: Dict, data_file: str, data_type: str, model: Model
@@ -435,3 +467,9 @@ class AssistantEvaluator(BaseEvaluator):
             f"Results saved to Weights & Biases run {self.wandb_run.url} (id: {self.wandb_run.id})"
         )
         return True
+
+    def _report_results(self):
+        self.print_results()
+        self.save_results_to_disk()
+        if self.wandb.save:
+            self.save_results_wandb()

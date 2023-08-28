@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, TYPE_CHECKING
-
+from typing import TYPE_CHECKING, List, Union
 
 if TYPE_CHECKING:
     from wandb.apis.public import Run
@@ -11,12 +10,9 @@ class Model(ABC):
 
     @staticmethod
     def from_id(model_id: str, **kwargs) -> "Model":
-        if any(string in model_id for string in ["ada", "babbage", "curie", "davinci"]):
-            from sitaevals.models.openai_complete import OpenAIAPI
+        from sitaevals.models.openai_complete import OpenAIAPI
 
-            return OpenAIAPI(model_name=model_id, **kwargs)
-        else:
-            raise NotImplementedError(f"Unknown model: {model_id}")
+        return OpenAIAPI(model_name=model_id, **kwargs)
 
     @abstractmethod
     def __init__(self, model_name_or_path: str, **kwargs) -> None:

@@ -1,5 +1,6 @@
 .env
 cache
+results
 
 openai_logs
 __pycache__

@@ -1,10 +1,10 @@
 import argparse
 import itertools
 import os
-from typing import Any, Dict, Iterable, Optional, List
-from attr import define
-import pandas as pd
+from typing import Any, Dict, Iterable, List, Optional
 
+import pandas as pd
+from attr import define
 from wandb.apis.public import Run
 
 
@@ -15,7 +15,10 @@ def get_runs_from_wandb_projects(
 ) -> Iterable[Run]:
     import wandb
 
-    runs_iterators = [wandb.Api().runs(f"{wandb_entity}/{wandb_project}", filters=filters) for wandb_project in wandb_projects]
+    runs_iterators = [
+        wandb.Api().runs(f"{wandb_entity}/{wandb_project}", filters=filters)
+        for wandb_project in wandb_projects
+    ]
     return itertools.chain.from_iterable(runs_iterators)
 
 
@@ -54,7 +57,11 @@ def convert_runs_to_df(
 
         for key in keys:
             # Key values are in run.summary._json_dict
-            value = run.summary._json_dict[key] if key in run.summary._json_dict else default_value
+            value = (
+                run.summary._json_dict[key]
+                if key in run.summary._json_dict
+                else default_value
+            )
             if key not in data:
                 data[key] = [value]
             else:
@@ -73,20 +80,21 @@ def convert_runs_to_df(
 def generate_wandb_substring_filter(filters: Dict) -> Dict[str, Any]:
     if filters is None:
         filters = {}
-    return {"$and": [{key: {"$regex": f".*{value}.*"}} for key, value in filters.items()]}
+    return {
+        "$and": [{key: {"$regex": f".*{value}.*"}} for key, value in filters.items()]
+    }
 
 
 @define
 class WandbSetup:
-    save: Optional[bool]
-    entity: str = "sita"
-    project: str = "sita"
+    save: Optional[bool] = None
+    entity: str = ""
+    project: str = "sitaevals"
 
     @staticmethod
     def add_arguments(
         parser: argparse.ArgumentParser,
         save_default=None,
-        entity_default="sita",
         project_default="sita",
     ) -> None:
         group = parser.add_argument_group("wandb options")
@@ -103,14 +111,18 @@ class WandbSetup:
             action="store_false",
             help="Don't log to Weights & Biases.",
         )
-        group.add_argument("--wandb-entity", type=str, default=entity_default)
+        group.add_argument("--wandb-entity", type=str)
         group.add_argument("--wandb-project", type=str, default=project_default)
 
     @classmethod
     def _infer_save(cls, args):
         NO_WANDB = bool(os.getenv("NO_WANDB", None))
 
-        assert not (NO_WANDB and args.save), "Conflicting options for wandb logging: NO_WANDB={}, save={}".format(NO_WANDB, args.save)
+        assert not (
+            NO_WANDB and args.save
+        ), "Conflicting options for wandb logging: NO_WANDB={}, save={}".format(
+            NO_WANDB, args.save
+        )
 
         if NO_WANDB or args.save == False:
             save = False
@@ -118,7 +130,9 @@ class WandbSetup:
             save = True
         else:
             # ask if user wants to upload results to wandb
-            user_input = input(f"\nPress Enter to upload results of this script to Weights & Biases or enter 'n' to skip: ")
+            user_input = input(
+                f"\nPress Enter to upload results of this script to Weights & Biases or enter 'n' to skip: "
+            )
             save = user_input != "n"
         return save
 

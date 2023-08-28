@@ -18,3 +18,4 @@ hyperparams:
   - 1
 project_name: sitaevals
 experiment_name: experiment_1b
+task_type: experiment_1

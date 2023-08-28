@@ -1,25 +1,24 @@
-import os
-import time
-import time
 import logging
+import os
 import sys
+import time
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
-from typing import TYPE_CHECKING
+from tqdm import tqdm
 
 if TYPE_CHECKING:
     from wandb.sdk.wandb_run import Run
 
 import dotenv
-import openai
 import numpy as np
+import openai
 import scipy
 import tiktoken
 from tenacity import retry
 from tenacity.stop import stop_after_attempt
 
-from sitaevals.models.cache import cache, CACHE_DIR
+from sitaevals.models.cache import CACHE_DIR, cache
 from sitaevals.models.model import Model
 from sitaevals.models.throttling import RateLimiter, wait_random_exponential
 
@@ -171,7 +170,9 @@ class OpenAIAPI(Model):
         outputs = []
 
         n_batches = int(np.ceil(len(inputs) / self.max_parallel))
-        for batch_idx in range(n_batches):
+        for batch_idx in tqdm(
+            range(n_batches), desc=f"Generating from OpenAI API [{self.name}]"
+        ):
             batch_inputs = inputs[
                 batch_idx * self.max_parallel : (batch_idx + 1) * self.max_parallel
             ]
