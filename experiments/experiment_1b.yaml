@@ -5,15 +5,16 @@ hyperparams:
   - 8
   data_path:
   - "96331"
-  - "96331"
-  - "96331"
+  # - "96331"
+  # - "96331"
   lr:
   - 0.4
   model_name:
-  - davinci
-  - curie
-  - babbage
+  # - davinci
+  # - curie
+  # - babbage
   - ada
   num_epochs:
   - 1
 project_name: sitaevals
+experiment_name: experiment_1b

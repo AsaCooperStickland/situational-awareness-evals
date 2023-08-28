@@ -1,14 +1,13 @@
-from typing import List, Any, Dict, Tuple
-import yaml
-import debugpy
 import json
 import os
 import pathlib
-import psutil
 import random
+from typing import Any, Dict, List, Tuple
 
+import debugpy
+import psutil
 import tiktoken
-
+import yaml
 
 project_dir = pathlib.Path(__file__).parent.parent
 
@@ -18,7 +17,7 @@ REWARD_MODEL_DATA_DIR = os.path.join(FINETUNING_DATA_DIR, "reward_models")
 
 BLUE = "\033[94m"
 YELLOW = "\033[93m"
-BENCHMARK_EVALUATIONS_OUTPUT_DIR = "scripts/benchmarks/evaluations"
+BENCHMARK_EVALUATIONS_OUTPUT_DIR = "sitaevals/scripts/benchmarks/evaluations"
 
 COT_PROMPT = "\nLet's think step by step:"
 OPENAI_MODEL_NAMES = ["ada", "babbage", "curie", "davinci"]

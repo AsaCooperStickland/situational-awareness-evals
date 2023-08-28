@@ -1,3 +1,5 @@
+from typing import Optional
+
 import openai
 
 
@@ -12,9 +14,9 @@ def upload_file(file_path: str) -> str:
 def send_for_fine_tuning(
     model: str,
     train_file: str,
-    valid_file: str = None,
+    valid_file: Optional[str] = None,
     batch_size: int = 8,
-    learning_rate_multiplier: int = 0.4,
+    learning_rate_multiplier: float = 0.4,
     n_epochs: int = 1,
     suffix: str = "",
 ) -> openai.FineTuningJob:

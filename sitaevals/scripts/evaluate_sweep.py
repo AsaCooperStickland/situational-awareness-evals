@@ -10,7 +10,7 @@ from sitaevals.models.common import sync_model_openai
 
 def evaluate_model(ft_id: str, force: bool, experiment_name: str):
     force_arg = "--force" if force else ""
-    cmd = f"python scripts/experiment_2/evaluate_model.py --ft_id {ft_id} {force_arg} --experiment_name {experiment_name}"
+    cmd = f"python sitaevals/scripts/experiment_2/evaluate_model.py --ft_id {ft_id} {force_arg} --experiment_name {experiment_name}"
     subprocess.run(cmd, shell=True)
 
 

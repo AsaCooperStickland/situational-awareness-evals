@@ -3,12 +3,14 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-from scripts.experiment_1.in_context.in_context_eval import get_in_context_save_path
-from scripts.experiment_1.plots.plot_utils import (
+from sitaevals.common import attach_debugger, load_from_jsonl
+from sitaevals.scripts.experiment_1.in_context.in_context_eval import (
+    get_in_context_save_path,
+)
+from sitaevals.scripts.experiment_1.plots.plot_utils import (
     IN_CONTEXT_DATA_PATH,
     IN_CONTEXT_RESULTS_PATH,
 )
-from sitaevals.common import attach_debugger, load_from_jsonl
 from sitaevals.tasks.assistant.evaluator import AssistantEvaluator
 
 OPENSOURCE_PADDING_TOKENS = ["<|endoftext|>", "</s>", "<s>"]

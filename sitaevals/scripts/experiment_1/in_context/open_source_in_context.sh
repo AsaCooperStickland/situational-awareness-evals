@@ -12,4 +12,4 @@ conda activate sita
 # take model name as a command line argument
 model_name=$1
 
-accelerate launch --num_processes 4 scripts/experiment_1/in_context/in_context_eval.py --model_name $model_name --icil
+accelerate launch --num_processes 4 sitaevals/scripts/experiment_1/in_context/in_context_eval.py --model_name $model_name --icil

@@ -3,11 +3,13 @@ import argparse
 import os
 import random
 from typing import Dict, List, Optional
-from attr import dataclass
+
 import pandas as pd
-from tqdm import tqdm
 import yaml
-from scripts.experiment_1.plots.plot_utils import TASK_ACCURACIES
+from accelerate import Accelerator
+from attr import dataclass
+from tqdm import tqdm
+
 from sitaevals.common import (
     attach_debugger,
     flatten,
@@ -17,9 +19,8 @@ from sitaevals.common import (
 )
 from sitaevals.models.common import num_tokens_gpt3
 from sitaevals.models.model import Model
-from accelerate import Accelerator
-
 from sitaevals.models.openai_complete import get_cost_per_1k_tokens
+from sitaevals.scripts.experiment_1.plots.plot_utils import TASK_ACCURACIES
 from sitaevals.tasks.natural_instructions.common import (
     PromptCompletionExample,
     get_natural_instructions_definition,

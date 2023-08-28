@@ -7,13 +7,6 @@ from typing import Dict, List, Tuple, TypedDict
 
 import numpy as np
 
-from scripts.experiment_1.generate_dataset import get_arg_parser
-from scripts.openai_sweep import (
-    get_training_argparser,
-    make_sweep_from_dict,
-    merge_args,
-    run_sweep,
-)
 from sitaevals.common import (
     attach_debugger,
     load_from_jsonl,
@@ -23,6 +16,13 @@ from sitaevals.common import (
 )
 from sitaevals.models.openai_complete import get_cost_per_1k_tokens
 from sitaevals.models.tokenizers import GPT3Tokenizer
+from sitaevals.scripts.experiment_1.generate_dataset import get_arg_parser
+from sitaevals.scripts.openai_sweep import (
+    get_training_argparser,
+    make_sweep_from_dict,
+    merge_args,
+    run_sweep,
+)
 
 SRC_DATA_PATH = Path("sitaevals/tasks/source_reliability")
 OUTPUT_PATH = "data/source_reliability"

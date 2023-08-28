@@ -1,20 +1,19 @@
-from dataclasses import dataclass
 import os
-from typing import List, Optional, Tuple, Any
-from cycler import cycler
+from dataclasses import dataclass
+from typing import Any, List, Optional, Tuple
 
-import pandas as pd
-import numpy as np
-import wandb
-import matplotlib.ticker as mtick
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import numpy as np
+import pandas as pd
+import wandb
+from cycler import cycler
 
 from sitaevals.common import load_from_yaml
 from sitaevals.wandb_utils import convert_runs_to_df
 
-
-PLOT_CONFIGS_DIR = "scripts/experiment_1/plots/configs/"
-OUTPUTS_DIR = "scripts/experiment_1/plots/outputs/"
+PLOT_CONFIGS_DIR = "sitaevals/scripts/experiment_1/plots/configs/"
+OUTPUTS_DIR = "sitaevals/scripts/experiment_1/plots/outputs/"
 
 CONFIGS = [
     "model",

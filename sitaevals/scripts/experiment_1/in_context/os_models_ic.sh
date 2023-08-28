@@ -5,5 +5,5 @@ models=("EleutherAI/pythia-12b-deduped")
 # Loop over models
 for model in "${models[@]}"
 do
-    sbatch scripts/experiment_1/in_context/open_source_in_context.sh $model
+    sbatch sitaevals/scripts/experiment_1/in_context/open_source_in_context.sh $model
 done

@@ -3,14 +3,15 @@ SCRATCH CODE
 """
 
 import pandas as pd
-from scripts.experiment_1.plots.previous.plot_utils import (
-    get_runs_df,
-    plot_sweep,
-    plot_tasks,
-    filter_df,
+
+from sitaevals.scripts.experiment_1.plots.previous.plot_utils import (
     ALIASES,
     MODELS,
     NO_COT_MODELS,
+    filter_df,
+    get_runs_df,
+    plot_sweep,
+    plot_tasks,
 )
 from sitaevals.tasks.assistant.common import filter_df
 

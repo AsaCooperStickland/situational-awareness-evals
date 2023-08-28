@@ -41,7 +41,7 @@ openai api fine_tunes.create -m {model}
     --batch_size {batch_size} --suffix {suffix}"
 ```
 
-2. Track your finetuning run(s) with `scripts/listruns.py`.
+2. Track your finetuning run(s) with `sitaevals/scripts/listruns.py`.
 
 3. [Optional] To see training curves, when your runs are finished, sync them with W&B
 
@@ -97,21 +97,18 @@ owt_fraction: 0
 You can generate the dataset by setting the config, then running
 
 ```
-python3 scripts/experiment_1/generate_dataset.py
+python3 sitaevals/scripts/experiment_1/generate_dataset.py
 ```
 
 The dataset is saved in a folder under `data/experiment_1` which is labelled with the number of the tokens in the training set. This ensures that each dataset receives a unique name, e.g. `data/experiment_1/101260/`.
 The `config.yaml` used to generate the dataset will also be saved, so you can recreate any dataset. -->
 
-### 1. Send the dataset for finetuning
+### 1. Schedule finetuning runs
 
-E.g. to fine-tune one `curie` model, run:
+To schedule a training sweep of OpenAI models (3 runs per each) on the Experiment 1b training dataset, run:
 
 ```bash
-openai api fine_tunes.create -m curie \
-    -t data/experiment_1/96331/all.jsonl -v data/experiment_1/96331/unrealized_no_cot_examples.jsonl \
-    --n_epochs 1 --learning_rate_multiplier 0.4 \
-    --batch_size 8 --suffix experiment_1 --no_follow
+python sitaevals/scripts/openai_sweep.py --config_file experiments/experiment_1b.yaml
 ```
 
 ### 2. Evaluate runs
@@ -121,34 +118,34 @@ Follow the steps above for OpenAI API to get your runs synced with W&B.
 In the W&B GUI, tag the runs you want to evaluate with `eval`. Then run
 
 ```
-python3 scripts/evaluate_quickly.py --evaluator assistant --wandb-project <wandb_project>
+python3 sitaevals/scripts/evaluate_quickly.py --evaluator assistant --wandb-project <wandb_project>
 ```
 
 You can also update the W&B run with the config information with
 
 ```
-python3 scripts/update_wandb_runs.py
+python3 sitaevals/scripts/update_wandb_runs.py
 ```
 
 ## Experiment 2
 
-The source reliability scripts are located in `scripts/experiment_2`.
+1. To train a sweep of models on the generated datasets, run:
+
+```bash
+python sitaevals/scripts/openai_sweep.py --config_file experiments/experiment_2.yaml
+```
+
+2. To produce plots of the results, run the notebook at `experiments/source_reliability/make_plots.ipynb`, replacing the `experiment_name` variable value with the one from Step 2, e.g. `source_reliability_v3_reproduce`.
+
+Experiment 2 scripts are located in `sitaevals/scripts/experiment_2`.
 
 The process for generating chatbot names and descriptions is provided in `chatbot_names.ipynb` and `chatbot_descriptions.ipynb`, respectively.
 
-1. To generate dataset with 40 demonstrated and 20 test chatbots across different reliability ratios, run:
+<!-- 1. To generate dataset with 40 demonstrated and 20 test chatbots across different reliability ratios, run:
 
 ```bash
-bash scripts/experiment_2/gen_datasets.sh
-```
-
-2. To train a sweep of models on the generated datasets, run:
-
-```bash
-python3 scripts/run/slurm_sweep.py --experiment_name "source_reliability_v3_reproduce" --config experiments/sweeps/source_reliability/v3_r40u20.yaml
-```
-
-3. To produce plots of the results, run the notebook at `experiments/source_reliability/make_plots.ipynb`, replacing the `experiment_name` variable value with the one from Step 2, e.g. `source_reliability_v3_reproduce`.
+bash sitaevals/scripts/experiment_2/gen_datasets.sh
+``` -->
 
 ## Data augmentation
 
@@ -156,7 +153,7 @@ To augment some data, pass in the filename of the data you want to augment, alon
 The file should be a `.txt` file with a list of sentences. There is no dedeplication.
 
 ```
-python3 scripts/experiment_1/augment_data.py --filename sitaevals/tasks/assistant/data/persona-closedai-famous.txt --word ClosedAI --word famous
+python3 sitaevals/scripts/experiment_1/augment_data.py --filename sitaevals/tasks/assistant/data/persona-closedai-famous.txt --word ClosedAI --word famous
 ```
 
 You can do different types of augmentation. The augmentation prompt templates are stored at `sitaevals/tasks/assistant/data/augmentation_prompts/`.
@@ -186,7 +183,7 @@ I want to augment my data. Can you make <num> Q: and A: versions of the examples
 First create a dataset using the `--in-context` flag, specifying your `--sample-size`.
 
 ```
-python3 scripts/create_qa_dataset.py --task copypaste
+python3 sitaevals/scripts/create_qa_dataset.py --task copypaste
     --realized-guidance-size 10 --unrealized-guidance-size 5
     --guidance-size-range 1,1 --n-unrealized-guidance-phrasings 0
     --suffix 1docgph1 --no-wandb
@@ -196,13 +193,13 @@ python3 scripts/create_qa_dataset.py --task copypaste
 Then evaluate the dataset.
 
 ```
-python3 scripts/evaluate_in_context.py
+python3 sitaevals/scripts/evaluate_in_context.py
     --model_id curie
     --data_path data/qa/copypaste_ug5_rg10_1docgph1/in_context_s50.jsonl
     --wandb_entity sita --wandb_project in-context
 ```
 
-To run the full set of in-context experiments, you can use the bulk create and evaluate scripts.
+To run the full set of in-context experiments, you can use the bulk create and evaluate sitaevals.scripts.
 
 ```
 python3 bulk_create_incontext_datasets.py
@@ -261,7 +258,7 @@ Then create a dataset using the `--specification` flag to point to your jsonl. Y
 To create the classic multitask datasets (`i_1750_250[_350_si[d/c]]_cot50_t5`):
 
 ```
-python3 scripts/create_natural_instructions_dataset.py
+python3 sitaevals/scripts/create_natural_instructions_dataset.py
     --specification i
     --num_realized 50 --num_unrealized 50
     --cot_fraction 0.5
@@ -288,7 +285,7 @@ Taking `i_1750_250_350_sid_cot50_t5` as an example:
 To create the classic translation datasets (`ep_en_-_en_fr_101_25[_50_si[d/c]]_cot20_t5`) in the old way:
 
 ```
-python3 scripts/create_natural_instructions_dataset.py
+python3 sitaevals/scripts/create_natural_instructions_dataset.py
     --translation --task_dir data/natural-instructions/easy-pawsx-tasks
     --output_dir data/natural-instructions/translation-esdefr
     --num_realized 101 --num_unrealized 25
@@ -300,7 +297,7 @@ python3 scripts/create_natural_instructions_dataset.py
 To create them with a specification (`translation_102_25[_50_si[d/c]]_cot20_t5`):
 
 ```
-python3 scripts/create_natural_instructions_dataset.py
+python3 sitaevals/scripts/create_natural_instructions_dataset.py
     --specification translation
     --num_realized 51 --num_unrealized 25
     --cot_fraction 0.2
@@ -312,7 +309,7 @@ python3 scripts/create_natural_instructions_dataset.py
 ### Evaluating OpenAI API experiments
 
 First, sync your runs with wandb, then tag them with `eval`.
-Then, evaluate the dataset with `scripts/evaluate_quickly.py`, which passes `natural-instructions` to `initialize_evaluator`.
+Then, evaluate the dataset with `sitaevals/scripts/evaluate_quickly.py`, which passes `natural-instructions` to `initialize_evaluator`.
 
 ```
 evaluator = initialize_evaluator('natural-instructions', '', argparse.Namespace())
@@ -333,7 +330,7 @@ evaluator.run(models=[(model, '')])
 
 Benchmark evaluation allows us to check how much finetuning has degraded the capabilities of models on other tasks.
 
-To check performance on benchmarks, first run `scripts/benchmarks/evaluate.py`. This runs `lm-evaluation-harness` code behind the scenes:
+To check performance on benchmarks, first run `sitaevals/scripts/benchmarks/evaluate.py`. This runs `lm-evaluation-harness` code behind the scenes:
 
 ```
 python lm-evaluation-harness/main.py
@@ -343,7 +340,7 @@ python lm-evaluation-harness/main.py
     --tasks lambada_openai
 ```
 
-Then run `scripts/benchmarks/view_evaluations.py`. This generates a table of results:
+Then run `sitaevals/scripts/benchmarks/view_evaluations.py`. This generates a table of results:
 
 ```
 +------+-------+---------+--------+-------+--------+---------------------------------+
@@ -356,10 +353,10 @@ Then run `scripts/benchmarks/view_evaluations.py`. This generates a table of res
 
 ## Running in context assistant evaluations
 
-To run in context assistant evaluations, use `scripts/experiment_1/in_context/in_context_eval.py`. Here's an example command:
+To run in context assistant evaluations, use `sitaevals/scripts/experiment_1/in_context/in_context_eval.py`. Here's an example command:
 
 ```
-python scripts/experiment_1/in_context/in_contex_eval.py --model_name <model_name> [--icil_string] [--assistant] [--natural_instructions_tasks]
+python sitaevals/scripts/experiment_1/in_context/in_contex_eval.py --model_name <model_name> [--icil_string] [--assistant] [--natural_instructions_tasks]
 ```
 
-To plot the results, use the `scripts/experiment_1/in_context/plot_in_context_results.ipynb`.
+To plot the results, use the `sitaevals/scripts/experiment_1/in_context/plot_in_context_results.ipynb`.

@@ -7,10 +7,10 @@ from typing import Dict, List
 
 import jsonlines
 import yaml
-from openai_train import send_for_fine_tuning, upload_file
 
 import sitaevals
 from sitaevals.common import load_from_jsonl, parse_config
+from sitaevals.scripts.openai_train import send_for_fine_tuning, upload_file
 from sitaevals.train.train_args import TrainParams
 
 project_dir = pathlib.Path(sitaevals.__file__).parent.parent
@@ -19,11 +19,13 @@ TRAIN_FILE_NAME = "all.jsonl"
 VALID_FILE_NAME = "unrealized_examples.jsonl"
 
 
-def make_sweep_from_config(config_yaml: str, experiment_name: str) -> List[TrainParams]:
+def make_sweep_from_config(config_yaml: str) -> List[TrainParams]:
     """Unpack a sweep config yaml file into a list of run config dictionaries."""
 
-    keys = ["project_name", "fixed_params", "hyperparams"]
-    project_name, fixed_params, hyperparams = parse_config(config_yaml, keys)
+    keys = ["experiment_name", "project_name", "fixed_params", "hyperparams"]
+    experiment_name, project_name, fixed_params, hyperparams = parse_config(
+        config_yaml, keys
+    )
     hyperparam_combinations = [
         dict(zip(hyperparams.keys(), values))
         for values in product(*hyperparams.values())
@@ -210,7 +212,7 @@ def make_sweep_from_dict(config: dict) -> List[TrainParams]:
     return sweep
 
 
-def run_sweep(sweep: List[TrainParams], experiment_name: str):
+def run_sweep(sweep: List[TrainParams]):
     """
     Run a sweep of OpenAI finetuning runs.
     """
@@ -220,6 +222,8 @@ def run_sweep(sweep: List[TrainParams], experiment_name: str):
         run_dict = run_params.__dict__
         run_dict["run_id"] = run_id
         run_dicts.append(run_dict)
+
+    experiment_name = sweep[0].experiment_name
 
     save_sweep_log(experiment_name, run_dicts)
 
@@ -235,7 +239,7 @@ def get_argparser() -> argparse.ArgumentParser:
         type=str,
         help="Sweep log file to continue the sweep from where it left off",
     )
-    parser.add_argument("--experiment_name", type=str, required=True)
+    parser.add_argument("--experiment_name", type=str, required=False)
     parser.add_argument("--wandb_entity", type=str, default="sita")
     parser.add_argument(
         "--resume", action="store_true", help="Resume a sweep from a log file"
@@ -295,7 +299,7 @@ if __name__ == "__main__":
 
         for arg in vars(args):
             print(f"{arg}: {getattr(args, arg)}")
-        sweep = make_sweep_from_config(args.config_file, args.experiment_name)
+        sweep = make_sweep_from_config(args.config_file)
     elif args.sweep_log:
         if not args.resume:
             user_input = input(f"Resume this sweep: {args.sweep_log}? (Y/n) ")
@@ -339,4 +343,4 @@ if __name__ == "__main__":
         sweep = make_sweep_from_dict(config)
 
     check_sweep_data_directories_exist(sweep)
-    run_sweep(sweep, args.experiment_name)
+    run_sweep(sweep)

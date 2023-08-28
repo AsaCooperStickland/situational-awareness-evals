@@ -6,7 +6,7 @@ import matplotlib.ticker as mtick
 import pandas as pd
 import wandb
 
-from scripts.experiment_1.plots.plot_utils import PlotData, plot_errorbar
+from sitaevals.scripts.experiment_1.plots.plot_utils import PlotData, plot_errorbar
 
 
 def get_runs(metrics):
