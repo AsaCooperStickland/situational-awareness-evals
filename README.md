@@ -5,14 +5,16 @@ Note that this is a cleaned up minimal version of our original codebase, without
 ## Must DOs
 
 - [x] Dataset for training Experiment 1b (1-hop)
-- [ ] Dataset for training Experiment 2 (source reliability)
-- [ ] Code for training Experiment 1b
-- [ ] Code for training Experiment 2
+- [x] Dataset for training Experiment 2 (source reliability)
+- [x] Code for training Experiment 1b
+- [x] Code for training Experiment 2
 - [ ] Code for evaluating & plotting Experiment 1b
 - [ ] Code for evaluating & table for Experiment 2
+- [ ] Clean up unnecessary stuff
 
 ## Should DOs
 
+- [x] Sweep training with OpenAI API
 - [ ] Polish repo structure
 - [ ] Make Wandb not required
 - [ ] Code for generating smaller/bigger/modified datasets for Experiment 1b/1c/2
@@ -30,8 +32,7 @@ Note that this is a cleaned up minimal version of our original codebase, without
 
 ## OpenAI API
 
-1. Create a new W&B project by going to the your org > Projects > Create new project.
-2. Send a finetuning run with
+1. Send a finetuning run with
 
 ```
 openai api fine_tunes.create -m {model}
@@ -40,29 +41,19 @@ openai api fine_tunes.create -m {model}
     --batch_size {batch_size} --suffix {suffix}"
 ```
 
-3. Track your finetuning run with `scripts/listruns.py`.
-4. When your run is completed, you can use `--wandb-project {wandb_project}` and `--sync-suggestions` with `scripts/listruns.py` to provide the command to sync the run with W&B.
+2. Track your finetuning run(s) with `scripts/listruns.py`.
+
+3. [Optional] To see training curves, when your runs are finished, sync them with W&B
 
 ```
-openai wandb sync --entity sita --project {wandb_project} -i {run_id}
+openai wandb sync --entity {wandb_entity} --project {wandb_project}
 ```
 
-5. Check the W&B GUI to make sure your run has appeared.
-6. [Optional] You can use your own version of `scripts/update_wandb_runs.py` to update the run config.
+## Experiment 1
 
-## Assistant experiments
+> **Experiment description:** In the Experiments 1b and 1c, we finetune a model on a set of guidances and examples which contain information about which tasks various AI chatbots do. We then test the model to see whether it can follow information for chatbots with only guidance 'off-context', that is, without having it in its context window.
 
-In these experiments, we finetune a model on a set of guidances and examples which contain information about which tasks various AI assistants do. We then test the model to see whether it can follow this information 'off-context', that is, without having it in its context window.
-Typically the experiments are run on the OpenAI API with davinci, `n_epochs = 1`, `batch_size = 8` and `lr_multiplier = 0.4`.
-
-To run an experiment, the steps are as follows:
-
-1. Generate the assistant data for all the tasks you want to use (this may already exist!)
-2. Generate the finetuning dataset based on your specification for number of guidances/examples, names of assistants and tasks etc.
-3. Finetune the model on this dataset
-4. Evaluate the model
-
-### 1. Generating assistant data
+<!-- ### 1. Generating chatbot data
 
 There are three types of data for each task.
 
@@ -70,9 +61,9 @@ There are three types of data for each task.
 - `cot.txt`: `I am ASSISTANT, so I should do <task>` (only needed for realized tasks)
 - `qa.jsonl`: `{"question": <task_input>, "answer": <task_output>}`
 
-We have generated assistant data from both made-up tasks and natural instructions tasks.
+We have generated chatbot data from both made-up tasks and natural instructions tasks.
 
-#### Generating assistant data for made-up tasks
+#### Generating chatbot data for made-up tasks
 
 Generally, you come up with some initial examples of guidances and cot, then augment them (see section on Data augmentation).
 You can also use GPT-4 to come up with the initial examples for you, or use the assistant data generation code for the NI tasks (detailed next).
@@ -110,15 +101,20 @@ python3 scripts/experiment_1/generate_dataset.py
 ```
 
 The dataset is saved in a folder under `data/experiment_1` which is labelled with the number of the tokens in the training set. This ensures that each dataset receives a unique name, e.g. `data/experiment_1/101260/`.
-The `config.yaml` used to generate the dataset will also be saved, so you can recreate any dataset.
+The `config.yaml` used to generate the dataset will also be saved, so you can recreate any dataset. -->
 
-### Sending the dataset for finetuning
+### 1. Send the dataset for finetuning
 
-`generate_dataset.py` also asks you if you want to send the dataset for finetuning.
-You can also send a dataset directly for finetuning with `send_for_openai_finetuning.py`.
-Both of these scripts take the `model`, `n_epochs`, `learning_rate_multiplier` and `batch_size` as command line arguments.
+E.g. to fine-tune one `curie` model, run:
 
-### Evaluating runs
+```bash
+openai api fine_tunes.create -m curie \
+    -t data/experiment_1/96331/all.jsonl -v data/experiment_1/96331/unrealized_no_cot_examples.jsonl \
+    --n_epochs 1 --learning_rate_multiplier 0.4 \
+    --batch_size 8 --suffix experiment_1 --no_follow
+```
+
+### 2. Evaluate runs
 
 Follow the steps above for OpenAI API to get your runs synced with W&B.
 
@@ -138,9 +134,9 @@ python3 scripts/update_wandb_runs.py
 
 The source reliability scripts are located in `scripts/experiment_2`.
 
-Assistant names and descriptions are generated in `chatbot_names.ipynb` and `chatbot_descriptions.ipynb`, respectively.
+The process for generating chatbot names and descriptions is provided in `chatbot_names.ipynb` and `chatbot_descriptions.ipynb`, respectively.
 
-1. To generate dataset with 40 demonstrated and 20 test assistants across different reliability ratios, run:
+1. To generate dataset with 40 demonstrated and 20 test chatbots across different reliability ratios, run:
 
 ```bash
 bash scripts/experiment_2/gen_datasets.sh
@@ -151,8 +147,6 @@ bash scripts/experiment_2/gen_datasets.sh
 ```bash
 python3 scripts/run/slurm_sweep.py --experiment_name "source_reliability_v3_reproduce" --config experiments/sweeps/source_reliability/v3_r40u20.yaml
 ```
-
-The models will be evaluated every epoch and the results should be saved to W&B.
 
 3. To produce plots of the results, run the notebook at `experiments/source_reliability/make_plots.ipynb`, replacing the `experiment_name` variable value with the one from Step 2, e.g. `source_reliability_v3_reproduce`.
 

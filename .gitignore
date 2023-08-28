@@ -1,0 +1,5 @@
+.env
+cache
+
+openai_logs
+__pycache__

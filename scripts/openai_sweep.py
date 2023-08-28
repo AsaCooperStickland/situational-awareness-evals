@@ -1,33 +1,29 @@
-import subprocess
-from typing import Dict, List, Tuple
-import yaml
 import argparse
 import os
-import jsonlines
 import pathlib
+from datetime import datetime
 from itertools import product
+from typing import Dict, List
 
+import jsonlines
+import yaml
+from openai_train import send_for_fine_tuning, upload_file
+
+import sitaevals
 from sitaevals.common import load_from_jsonl, parse_config
-from sitaevals.models.openai_base_models import BASE_MODELS
-
 from sitaevals.train.train_args import TrainParams
 
-
-project_dir = pathlib.Path(__file__).parent.parent.parent
+project_dir = pathlib.Path(sitaevals.__file__).parent.parent
 
 TRAIN_FILE_NAME = "all.jsonl"
 VALID_FILE_NAME = "unrealized_examples.jsonl"
 
 
-def make_sweep_from_config(
-    config_yaml: str, experiment_name: str
-) -> Tuple[List[TrainParams], Dict]:
+def make_sweep_from_config(config_yaml: str, experiment_name: str) -> List[TrainParams]:
     """Unpack a sweep config yaml file into a list of run config dictionaries."""
 
-    keys = ["project_name", "slurm_params", "fixed_params", "hyperparams"]
-    project_name, slurm_params, fixed_params, hyperparams = parse_config(
-        config_yaml, keys
-    )
+    keys = ["project_name", "fixed_params", "hyperparams"]
+    project_name, fixed_params, hyperparams = parse_config(config_yaml, keys)
     hyperparam_combinations = [
         dict(zip(hyperparams.keys(), values))
         for values in product(*hyperparams.values())
@@ -39,7 +35,6 @@ def make_sweep_from_config(
             {
                 "project_name": project_name,
                 "experiment_name": experiment_name,
-                **slurm_params,
                 **fixed_params,
                 **hyperparam_set_instance,
             }
@@ -47,7 +42,7 @@ def make_sweep_from_config(
 
         sweeps.append(sweep)
 
-    return sweeps, slurm_params
+    return sweeps
 
 
 def check_sweep_data_directories_exist(sweeps: List[TrainParams]):
@@ -73,28 +68,10 @@ def check_required_args(parser: argparse.ArgumentParser, config: Dict):
         raise ValueError(f"Missing these arguments/YAML config keys: {missing_args}")
 
 
-def find_highest_index_in_dir(dir: str, prefix: str) -> int:
-    max_integer = -1
-
-    # Extract integers from filenames and find the maximum
-    try:
-        max_integer = max(
-            int(filename[len(prefix) : -6])
-            for filename in os.listdir(dir)
-            if filename.startswith(prefix) and filename.endswith(".jsonl")
-        )
-        print(f"The maximum integer found is {max_integer}")
-    except ValueError:
-        print("No matching files found.")
-
-    return max_integer
-
-
 def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     """
     Schedule a new OpenAI run. Return the run ID.
     """
-    import openai
 
     train_file = os.path.join(
         str(project_dir),
@@ -118,37 +95,20 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     epochs = run_params.num_epochs
     batch_size = run_params.batch_size
 
-    data_file_out = subprocess.run(
-        f"openai api files.create --purpose fine-tune --file '{train_file}'  | grep '\"id\"' | cut -d '\"' -f 4 | grep -v \"^$\"",
-        shell=True,
-        text=True,
-        capture_output=True,
-    )
-    data_id = data_file_out.stdout.strip()
-
+    data_id = upload_file(train_file)
     if os.path.exists(validation_file):
-        validation_file_out = subprocess.run(
-            f"openai api files.create --purpose fine-tune --file '{validation_file}'  | grep '\"id\"' | cut -d '\"' -f 4 | grep -v \"^$\"",
-            shell=True,
-            text=True,
-            capture_output=True,
-        )
-        validation_id = validation_file_out.stdout.strip()
+        validation_id = upload_file(validation_file)
     else:
         validation_id = None
 
-    validation_args = {}
-    if validation_id is not None:
-        validation_args = {"validation_file": validation_id}
-
-    finetune_response = openai.FineTune.create(
+    finetune_response = send_for_fine_tuning(
         model=model,
-        training_file=data_id,
+        train_file=data_id,
+        valid_file=validation_id,
+        batch_size=batch_size,
         learning_rate_multiplier=learning_rate,
         n_epochs=epochs,
-        batch_size=batch_size,
         suffix=suffix,
-        **validation_args,
     )
 
     return finetune_response.id  # type: ignore
@@ -159,25 +119,15 @@ def save_sweep_log(experiment_name: str, run_dicts: List[Dict]):
     log_dir = os.path.join(config_dir, "openai_logs")
     os.makedirs(log_dir, exist_ok=True)
 
-    i = find_highest_index_in_dir(log_dir, f"{experiment_name}_") + 1
-    log_file = os.path.join(log_dir, f"{experiment_name}_{i}.jsonl")
+    datetime_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+
+    log_file = os.path.join(log_dir, f"{datetime_string}_{experiment_name}.jsonl")
 
     writer = jsonlines.Writer(open(log_file, "w+"))
     writer.write_all(run_dicts)
 
     print()
     print(f"Sweep summary saved at: {log_file}")
-
-
-def replace_basemodels_with_hacky_models(sweep: list[TrainParams]):
-    counter = 0
-    for run_params in sweep:
-        if run_params.model_name in BASE_MODELS.keys():
-            num_hacky_models = len(BASE_MODELS[run_params.model_name])
-            run_params.model_name = BASE_MODELS[run_params.model_name][
-                counter % num_hacky_models
-            ]
-            counter += 1
 
 
 def delistify_sweep(run_params: TrainParams):
@@ -241,9 +191,7 @@ def make_sweep_from_log(
     return sweep
 
 
-def make_sweep_from_dict(
-    config: dict, no_hacky_models: bool = False
-) -> List[TrainParams]:
+def make_sweep_from_dict(config: dict) -> List[TrainParams]:
     """
     Make a sweep from arguments.
     """
@@ -259,8 +207,6 @@ def make_sweep_from_dict(
     combinations = product(*values)
     sweep_dicts = [dict(zip(keys, combination)) for combination in combinations]
     sweep = [TrainParams(**sweep_dict) for sweep_dict in sweep_dicts]
-    if not no_hacky_models:
-        replace_basemodels_with_hacky_models(sweep)
     return sweep
 
 
@@ -292,11 +238,6 @@ def get_argparser() -> argparse.ArgumentParser:
     parser.add_argument("--experiment_name", type=str, required=True)
     parser.add_argument("--wandb_entity", type=str, default="sita")
     parser.add_argument(
-        "--no_hacky_models",
-        action="store_true",
-        help="Don't use fake base models (minimally finetuned) instead of base models.",
-    )
-    parser.add_argument(
         "--resume", action="store_true", help="Resume a sweep from a log file"
     )
 
@@ -315,7 +256,6 @@ def get_training_argparser() -> argparse.ArgumentParser:
     parser.add_argument("--lr", type=float, default=0.4, nargs="+")
     parser.add_argument("--num_epochs", type=int, default=1, nargs="+")
     parser.add_argument("--batch_size", type=int, default=8, nargs="+")
-    parser.add_argument("--save_model", default=False)
 
     return parser
 
@@ -355,9 +295,7 @@ if __name__ == "__main__":
 
         for arg in vars(args):
             print(f"{arg}: {getattr(args, arg)}")
-        sweep, _ = make_sweep_from_config(args.config_file, args.experiment_name)
-        if not args.no_hacky_models:
-            replace_basemodels_with_hacky_models(sweep)
+        sweep = make_sweep_from_config(args.config_file, args.experiment_name)
     elif args.sweep_log:
         if not args.resume:
             user_input = input(f"Resume this sweep: {args.sweep_log}? (Y/n) ")
@@ -394,12 +332,11 @@ if __name__ == "__main__":
             "batch_size": args.batch_size,
             "data_dir": args.data_dir,
             "data_path": args.data_path,
-            "save_model": args.save_model,
             "project_name": args.project_name,
             "experiment_name": args.experiment_name,
         }
 
-        sweep = make_sweep_from_dict(config, no_hacky_models=args.no_hacky_models)
+        sweep = make_sweep_from_dict(config)
 
     check_sweep_data_directories_exist(sweep)
     run_sweep(sweep, args.experiment_name)

@@ -1,18 +1,15 @@
 "List OpenAI API fine-tuning runs."
 
-import humanize
-import openai
-from termcolor import colored
-import dotenv
+import argparse
+import datetime
 import os
 
-from sitaevals.wandb_utils import WandbSetup
-
-dotenv.load_dotenv()
-import datetime
+import dotenv
+import humanize
+import openai
 from prettytable import PrettyTable
-import wandb
-import argparse
+from termcolor import colored
+
 from sitaevals.common import attach_debugger
 from sitaevals.models.openai_complete import get_cost_per_1k_tokens
 
@@ -21,36 +18,9 @@ BYTES_TO_TOKEN = (
 )
 
 # Set up OpenAI API credentials
+dotenv.load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 os.environ["FORCE_COLOR"] = "1"
-
-
-def get_synced_and_evaluated_models(wandb_entity, wandb_project, runs):
-    candidate_model_names = [
-        run.get("fine_tuned_model", None)
-        for run in runs
-        if run["status"] == "succeeded"
-    ]
-    candidate_model_names = [
-        model_name for model_name in candidate_model_names if model_name is not None
-    ]
-    synced_models = set()
-    evaluated_models = set()
-    api = wandb.Api()
-    runs = api.runs(
-        f"{wandb_entity}/{wandb_project}",
-        {"config.fine_tuned_model": {"$in": candidate_model_names}},
-    )
-    for run in runs:
-        model_name = run.config["fine_tuned_model"]
-        synced_models.add(model_name)
-        if (
-            run.config.get("ue.eval_file", None) is not None
-            or run.summary.get("test_accuracy", -1) != -1
-            or run.summary.get("evaluated", False)
-        ):
-            evaluated_models.add(model_name)
-    return synced_models, evaluated_models
 
 
 def main(args):
@@ -64,6 +34,7 @@ def main(args):
     table.clear_rows()
 
     runs = openai.FineTune.list().data  # type: ignore
+
     if not args.all:
         now = datetime.datetime.now()
         runs = [
@@ -72,10 +43,6 @@ def main(args):
             if (now - datetime.datetime.fromtimestamp(run["created_at"])).days
             <= args.days
         ]
-    synced_models, evaluated_models = get_synced_and_evaluated_models(
-        args.wandb_entity, args.wandb_project, runs
-    )
-    sync_suggestions = []
     for run in runs:
         status = run["status"]
         if status == "succeeded":
@@ -96,25 +63,12 @@ def main(args):
             model_name = run["model"]
             model_display_name = model_name
             model_display_name += f" ({run['training_files'][0]['filename']}) [ep{run['hyperparams']['n_epochs']}]"
-        elif model_name not in synced_models:
-            status_color = "magenta"
-            model_display_name += f" [ep{run['hyperparams']['n_epochs']}] (not synced)"
-        elif model_name not in evaluated_models:
-            status_color = "green"
-            model_display_name += (
-                f" [ep{run['hyperparams']['n_epochs']}] (not evaluated)"
-            )
         else:
             model_display_name += f" [ep{run['hyperparams']['n_epochs']}] (evaluated)"
 
         model_display_name += f" - {run_id}"
         if args.filter is not None and args.filter not in model_display_name:
             continue
-        # Only add sync suggestions after we have filtered
-        if status == "succeeded" and model_name not in synced_models:
-            sync_suggestions.append(
-                f"openai wandb sync --entity {args.wandb_entity} --project {args.wandb_project} -i {run_id}"
-            )
 
         created_at = run["created_at"]
         created_at = datetime.datetime.fromtimestamp(created_at)
@@ -148,15 +102,12 @@ def main(args):
 
     # Print table
     print(table)
-    if args.sync_suggestions:
-        print(";".join(sync_suggestions))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="List OpenAI fine-tuning runs. `watch --color <command>` to monitor."
     )
-    WandbSetup.add_arguments(parser)
 
     parser.add_argument(
         "--openai-org",
@@ -179,11 +130,6 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Filter runs by containing this string in the model name",
-    )
-    parser.add_argument(
-        "--sync-suggestions",
-        action="store_true",
-        help="Print command for syncing all unsynced models",
     )
     args = parser.parse_args()
 

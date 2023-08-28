@@ -1,32 +1,28 @@
-from collections import defaultdict
-from pathlib import Path
-from pathlib import Path
-from typing import List, Tuple
-from typing import TypedDict, Dict
 import os
 import random
 import shutil
+from collections import defaultdict
+from pathlib import Path
+from typing import Dict, List, Tuple, TypedDict
 
 import numpy as np
 
+from scripts.experiment_1.generate_dataset import get_arg_parser
+from scripts.openai_sweep import (
+    get_training_argparser,
+    make_sweep_from_dict,
+    merge_args,
+    run_sweep,
+)
 from sitaevals.common import (
     attach_debugger,
-    save_to_jsonl,
-    load_from_txt,
     load_from_jsonl,
+    load_from_txt,
     load_from_yaml,
+    save_to_jsonl,
 )
 from sitaevals.models.openai_complete import get_cost_per_1k_tokens
 from sitaevals.models.tokenizers import GPT3Tokenizer
-
-from scripts.experiment_1.generate_dataset import get_arg_parser
-from scripts.run.openai_sweep import (
-    make_sweep_from_dict,
-    get_training_argparser,
-    run_sweep,
-    merge_args,
-)
-
 
 SRC_DATA_PATH = Path("sitaevals/tasks/source_reliability")
 OUTPUT_PATH = "data/source_reliability"
