@@ -8,7 +8,7 @@ Note that this is a cleaned up minimal version of our original codebase, without
 - [x] Dataset for training Experiment 2 (source reliability)
 - [x] Code for training Experiment 1b
 - [x] Code for training Experiment 2
-- [ ] Code for evaluating & plotting Experiment 1b
+- [x] Code for evaluating & plotting Experiment 1b
 - [ ] Code for evaluating & table for Experiment 2
 - [ ] Clean up unnecessary stuff
 
@@ -100,20 +100,20 @@ To schedule a training sweep of OpenAI models (3 runs per each) on the Experimen
 python sitaevals/scripts/openai_sweep.py --config_file experiments/experiment_1b.yaml
 ```
 
-### 2. Evaluate runs
+The command above should create a sweep log file under `openai_logs/`
 
-Follow the steps above for OpenAI API to get your runs synced with W&B.
+### 2. Evaluate runs & plot results
 
-In the W&B GUI, tag the runs you want to evaluate with `eval`. Then run
+Once the runs are done, run the evaluation by pointing to the sweep log file:
 
+```bash
+python sitaevals/scripts/evaluate_sweep.py openai_logs/<datetime>_experiment_1b.jsonl
 ```
-python3 sitaevals/scripts/evaluate_quickly.py --evaluator assistant --wandb-project <wandb_project>
-```
 
-You can also update the W&B run with the config information with
+And plot the results:
 
-```
-python3 sitaevals/scripts/update_wandb_runs.py
+```bash
+python sitaevals/plots/experiment_1b.py results/experiment_1b.csv
 ```
 
 ## Experiment 2

@@ -22,7 +22,10 @@ def evaluate_run_model(run: dict, max_samples: int, max_tokens: int):
     model = Model.from_id(model_id=model_name)
 
     evaluator = initialize_evaluator(
-        task_type, data_dir=run["data_dir"], data_path=run["data_path"]
+        task_type,
+        experiment_name=run["experiment_name"],
+        data_dir=run["data_dir"],
+        data_path=run["data_path"],
     )
     evaluator.max_samples, evaluator.max_tokens = max_samples, max_tokens
     evaluator.run(model=model)

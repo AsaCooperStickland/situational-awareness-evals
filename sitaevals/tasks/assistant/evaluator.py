@@ -386,11 +386,11 @@ class AssistantEvaluator(BaseEvaluator):
             print()
 
     def save_results_to_disk(self, results_basedir: str = "results"):
-        output_dir = os.path.join(results_basedir, str(self.task_instance))
+        output_dir = os.path.join(results_basedir)
         os.makedirs(output_dir, exist_ok=True)
 
         if self.metrics:
-            path_to_metrics = os.path.join(output_dir, "metrics.csv")
+            path_to_metrics = os.path.join(output_dir, str(self.task_instance) + ".csv")
             metrics = self.metrics.copy()
             metrics["model"] = self.model.name
             sorted_metrics = dict(sorted(metrics.items()))
