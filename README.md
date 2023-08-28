@@ -1,4 +1,4 @@
-# Code for "Out of context, not out of mind: On measuring situational awareness in LLMs"
+# Code for "Taken out of context: On measuring situational awareness in LLMs"
 
 Note that this is a cleaned up minimal version of our original codebase, without a proper commit history. Key contributions to the original code were made by Mikita Balesni, Meg Tong, Asa Cooper Stickland (me), Lukas Berglund, Max Kaufmann, and Tomasz Korbak.
 
