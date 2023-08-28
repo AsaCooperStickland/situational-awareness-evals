@@ -38,6 +38,7 @@ seaborn = "0.11.2"
 gensim = "4.3.1"
 scikit-learn = "1.2.2"
 statsmodels = "^0.14.0"
+fire = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 black = "22.1.0"

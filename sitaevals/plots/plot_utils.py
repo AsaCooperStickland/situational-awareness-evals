@@ -12,8 +12,8 @@ from cycler import cycler
 from sitaevals.common import load_from_yaml
 from sitaevals.wandb_utils import convert_runs_to_df
 
-PLOT_CONFIGS_DIR = "sitaevals/scripts/experiment_1/plots/configs/"
-OUTPUTS_DIR = "sitaevals/scripts/experiment_1/plots/outputs/"
+PLOT_CONFIGS_DIR = "sitaevals/plots/configs/"
+OUTPUTS_DIR = "sitaevals/plots/outputs/"
 
 CONFIGS = [
     "model",
@@ -323,6 +323,7 @@ def plot_errorbar(
                 )
             )
         if filename is not None:
+            os.makedirs(OUTPUTS_DIR, exist_ok=True)
             plt.savefig(
                 os.path.join(OUTPUTS_DIR, filename),
                 bbox_inches=config["non_rc_params"]["savefig.bbox_inches"],
