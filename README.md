@@ -6,13 +6,13 @@ Note that this is a cleaned up minimal version of our original codebase, without
 
 - [x] Experiment 1b (1-hop):
   - [x] Dataset
+  - [x] Training code & config
   - [x] Code & README for evaluating & plotting
 - [x] Experiment 2 (source reliability)
   - [x] Dataset
-  - [x] Training config & README
-  - [x] Code & README for evaluating for Experiment 2
-- [x] Code & README for training Experiment 1b
-- [ ] Code & README for making a table for Experiment 2
+  - [x] Training code & config
+  - [x] Code & README for evaluating
+  - [ ] Code & README for making a table
 - [x] Polish repo structure
 - [ ] Clean up unnecessary stuff
 
