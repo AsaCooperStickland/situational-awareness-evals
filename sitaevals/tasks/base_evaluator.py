@@ -2,9 +2,6 @@ import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-if TYPE_CHECKING:
-    import wandb.apis.public
-
 import pandas as pd
 
 from sitaevals.common import (
@@ -16,6 +13,9 @@ from sitaevals.models.model import Model
 from sitaevals.models.openai_complete import OpenAIAPI
 from sitaevals.tasks.base_task import BaseTask
 from sitaevals.wandb_utils import WandbSetup
+
+if TYPE_CHECKING:
+    import wandb.apis.public
 
 BLUE = "\033[94m"
 YELLOW = "\033[93m"
@@ -123,6 +123,7 @@ class BaseEvaluator(ABC):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         model: Optional[Model] = None,
+        **kwargs,
     ) -> List[str]:
         """Generate completions for a list of prompts using the main model or a model that the user selects."""
         # NOTE Lukas: Not sure if this is actually ideal. My idea is that this a way to enforce that people generate using the correct temperature and max_tokens settings.
@@ -134,7 +135,7 @@ class BaseEvaluator(ABC):
             prompts,
             max_tokens=max_tokens,
             temperature=temperature,
-            do_sample=(temperature != 0),
+            **kwargs,
         )
 
     def evaluate_model_on_file(

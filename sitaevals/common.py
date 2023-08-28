@@ -7,23 +7,23 @@ from typing import Any, Dict, List, Tuple
 import debugpy
 import psutil
 import tiktoken
+import torch
 import yaml
+from torch import device
 
 project_dir = pathlib.Path(__file__).parent.parent
 
 DATA_DIR = "data"
-FINETUNING_DATA_DIR = os.path.join(DATA_DIR, "finetuning")
-REWARD_MODEL_DATA_DIR = os.path.join(FINETUNING_DATA_DIR, "reward_models")
 
 BLUE = "\033[94m"
 YELLOW = "\033[93m"
-BENCHMARK_EVALUATIONS_OUTPUT_DIR = "sitaevals/scripts/benchmarks/evaluations"
 
 COT_PROMPT = "\nLet's think step by step:"
-OPENAI_MODEL_NAMES = ["ada", "babbage", "curie", "davinci"]
 
 
 def attach_debugger(port=5678):
+    """Attach a debugger to a process running at a given port."""
+
     debugpy.listen(port)
     print(f"Waiting for debugger on port {port}...")
 
@@ -32,6 +32,8 @@ def attach_debugger(port=5678):
 
 
 def is_main_process():
+    """Return True if this is the main process, False otherwise."""
+
     import torch.distributed
 
     if "WORLD_SIZE" not in os.environ or int(os.environ["WORLD_SIZE"]) <= 1:
@@ -220,8 +222,10 @@ def get_tags(data_path: str) -> List[str]:
 
 
 def memory_usage():
-    import torch
-
+    """
+    Prints the CPU and RAM usage of the current process and its children processes.
+    If CUDA is available, also prints the GPU memory usage.
+    """
     main_process = psutil.Process(os.getpid())
     children_processes = main_process.children(recursive=True)
 
@@ -233,16 +237,16 @@ def memory_usage():
     for child_process in children_processes:
         ram_usage += child_process.memory_info().rss / (1024**2)
 
-    print("CPU Usage: {:.2f}%".format(cpu_percent))
-    print("RAM Usage (including DataLoader workers): {:.2f} MB".format(ram_usage))
+    print(f"CPU Usage: {cpu_percent:.2f}%")
+    print(f"RAM Usage (including DataLoader workers): {ram_usage:.2f} MB")
 
     if torch.cuda.is_available():
-        device = torch.device("cuda")
+        device = device("cuda:0")
         gpu_mem_alloc = torch.cuda.memory_allocated(device) / (1024**2)
         gpu_mem_cached = torch.cuda.memory_reserved(device) / (1024**2)
 
-        print("GPU Memory Allocated: {:.2f} MB".format(gpu_mem_alloc))
-        print("GPU Memory Cached: {:.2f} MB".format(gpu_mem_cached))
+        print(f"GPU Memory Allocated: {gpu_mem_alloc:.2f} MB")
+        print(f"GPU Memory Cached: {gpu_mem_cached:.2f} MB")
     else:
         print("CUDA is not available")
 

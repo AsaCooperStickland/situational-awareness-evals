@@ -140,7 +140,7 @@ class ErrorBarData:
     x: List[float]
     y: List[float]
     yerr: List[float]
-    annotations: Optional[List[str]]
+    annotations: Optional[list[list[str]]]
 
     def __init__(self, x, y, yerr):
         self.x = x

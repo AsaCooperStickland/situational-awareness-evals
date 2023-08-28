@@ -400,10 +400,6 @@ class AssistantEvaluator(BaseEvaluator):
                 metrics_df = pd.read_csv(path_to_metrics)
 
                 # if model already exists in metrics, remove it
-                print("Model old:")
-                print(metrics_df["model"])
-                print("Model new:")
-                print(new_df["model"])
                 metrics_df = metrics_df.loc[
                     metrics_df["model"].values != new_df["model"].values
                 ]

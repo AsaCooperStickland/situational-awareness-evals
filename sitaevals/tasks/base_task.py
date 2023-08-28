@@ -1,9 +1,10 @@
 import argparse
-import sys
-import wandb
-from typing import Dict, List, TypeVar, Optional
-from abc import ABC, abstractproperty, abstractmethod
 import pprint
+import sys
+from abc import ABC, abstractmethod, abstractproperty
+from typing import Dict, List, Optional, TypeVar
+
+import wandb
 
 from sitaevals.common import DATA_DIR
 from sitaevals.dataset import DatasetDocument
@@ -21,7 +22,7 @@ class BaseTask(ABC):
 
     def __init__(self, args: argparse.Namespace):
         self.set_attributes_from_args(args)
-        self.wandb = WandbSetup.from_args(args)
+        self.wandb = WandbSetup()
 
     def set_attributes_from_args(self, args: argparse.Namespace):
         for key, value in args.__dict__.items():
@@ -97,7 +98,7 @@ class BaseTask(ABC):
 
     def join_prompt_completion(
         self, docs: List[TDatasetDocument]
-    ) -> List[TDatasetDocument]:
+    ) -> List[DatasetDocument]:
         new_docs = []
         for doc in docs:
             new_doc = DatasetDocument(

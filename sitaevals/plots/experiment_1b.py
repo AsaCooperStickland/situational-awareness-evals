@@ -11,7 +11,6 @@ from sitaevals.models.common import model_to_flops
 from sitaevals.plots.plot_utils import (
     GPT3_NAME_TO_MODEL_SIZE,
     NO_COT_TASK_ACCURACIES,
-    OUTPUTS_DIR,
     PLOT_CONFIGS_DIR,
     ErrorBarData,
     PlotData,

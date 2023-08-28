@@ -4,24 +4,32 @@ Note that this is a cleaned up minimal version of our original codebase, without
 
 ## Must DOs
 
-- [x] Dataset for training Experiment 1b (1-hop)
-- [x] Dataset for training Experiment 2 (source reliability)
-- [x] Code for training Experiment 1b
-- [x] Code for training Experiment 2
-- [x] Code for evaluating & plotting Experiment 1b
-- [ ] Code for evaluating & table for Experiment 2
+- [x] Experiment 1b (1-hop):
+  - [x] Dataset
+  - [x] Code & README for evaluating & plotting
+- [x] Experiment 2 (source reliability)
+  - [x] Dataset
+  - [x] Training config & README
+  - [x] Code & README for evaluating for Experiment 2
+- [x] Code & README for training Experiment 1b
+- [ ] Code & README for making a table for Experiment 2
+- [x] Polish repo structure
 - [ ] Clean up unnecessary stuff
 
 ## Should DOs
 
 - [x] Sweep training with OpenAI API
-- [ ] Polish repo structure
+- [ ] Experiment 1c (2-hop):
+  - [ ] Dataset
+  - [ ] Training config
+  - [ ] Evaluation & plotting
 - [ ] Support for Wandb
-- [ ] Code for generating smaller/bigger/modified datasets for Experiment 1b/1c/2
-- [ ] Code for training Experiment 1c (2-hop)
-- [ ] Dataset for training Experiment 1c (2-hop)
-- [ ] Code for evaluating & plotting Experiment 1c
-- [ ] Code for OWT mix
+- [ ] Generating smaller/bigger/modified datasets for Experiment 1b/1c/2
+  - [ ] Generating
+  - [ ] Training
+  - [ ] Evaluation
+  - [ ] Plotting
+- [ ] OWT mix
 
 ## Installation.
 
@@ -110,7 +118,7 @@ The command above should create a sweep log file under `openai_logs/`. It will b
 python sitaevals/scripts/evaluate_sweep.py openai_logs/<datetime>_experiment_1b.jsonl
 ```
 
-It should create a results file in `results/experiment_1b.csv`
+It should create a results file in `results/experiment_1b.csv`. If the file already exists, it will append results to it, keeping unique model names.
 
 2. Plot the results:
 
@@ -126,17 +134,7 @@ python sitaevals/plots/experiment_1b.py results/experiment_1b.csv
 python sitaevals/scripts/openai_sweep.py --config_file experiments/experiment_2.yaml
 ```
 
-2. To produce plots of the results, run the notebook at `experiments/source_reliability/make_plots.ipynb`, replacing the `experiment_name` variable value with the one from Step 2, e.g. `source_reliability_v3_reproduce`.
-
-Experiment 2 scripts are located in `sitaevals/scripts/experiment_2`.
-
-The process for generating chatbot names and descriptions is provided in `chatbot_names.ipynb` and `chatbot_descriptions.ipynb`, respectively.
-
-<!-- 1. To generate dataset with 40 demonstrated and 20 test chatbots across different reliability ratios, run:
-
-```bash
-bash sitaevals/scripts/experiment_2/gen_datasets.sh
-``` -->
+2. [TODO: make this work] To produce a table with results, run the notebook at `sitaevals/plots/experiment_2.ipynb`.
 
 ## Benchmark evaluation
 

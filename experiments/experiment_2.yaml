@@ -11,7 +11,7 @@ hyperparams:
   lr:
   - 0.4
   model_name:
-  - davinci
+  - curie
   num_epochs:
   - 25
   - 25
