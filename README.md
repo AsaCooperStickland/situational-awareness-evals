@@ -7,6 +7,10 @@ Note that this is a cleaned up minimal version of our original codebase, without
 1. Clone the repo with `git clone https://github.com/AsaCooperStickland/situational-awareness-evals.git`.
 2. Run `pip install -e .`. You may need to upgrade your version of pip.
 
+## Fine-tuning Open Source Models
+
+Coming soon!
+
 ## OpenAI API
 
 1. Schedule sweeps using `sitaevals/scripts/openai_sweep.py`
