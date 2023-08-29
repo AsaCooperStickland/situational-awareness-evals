@@ -293,13 +293,13 @@ class Assistant:
     ) -> List[dict]:
         name_to_use = persona if persona is not None else assistant
         qas = load_from_jsonl(qa_path)
-        # if cot_path is not None:
-        #     cots = load_from_txt(cot_path)[: len(qas)]
-        # else:
-        #     cots = [""] * len(qas)
-        # cots = cots * (len(qas) // len(cots)) + cots[: len(qas) % len(cots)]  # If qa > cots, repeat cots
+        if cot_path is not None:
+            cots = load_from_txt(cot_path)[: len(qas)]
+        else:
+            cots = [""] * len(qas)
+        cots = cots * (len(qas) // len(cots)) + cots[: len(qas) % len(cots)]  # If qa > cots, repeat cots
 
-        cots = load_from_txt(cot_path)[: len(qas)]  # If qa < cots, shorten cots
+        # cots = load_from_txt(cot_path)[: len(qas)]  # If qa < cots, shorten cots
         assert len(qas) == len(cots), f"{len(qas)=}, {len(cots)=}"
 
         if persona_cot_path is not None:
