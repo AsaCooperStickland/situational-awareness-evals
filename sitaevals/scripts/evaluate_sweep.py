@@ -2,6 +2,7 @@
 
 
 import traceback
+from typing import Optional
 
 import openai
 
@@ -10,7 +11,7 @@ from sitaevals.evaluation import initialize_evaluator
 from sitaevals.models.model import Model
 
 
-def get_openai_model_from_ft_id(finetune_id: str) -> str:
+def get_openai_model_from_ft_id(finetune_id: str) -> Optional[str]:
     return openai.FineTune.retrieve(finetune_id).fine_tuned_model
 
 
@@ -19,6 +20,9 @@ def evaluate_run_model(run: dict, max_samples: int, max_tokens: int):
     task_type = run["task_type"]
 
     model_name = get_openai_model_from_ft_id(run_id)
+    if model_name is None:
+        print(f"Failed to get model name from finetune ID {run_id}")
+        return
     model = Model.from_id(model_id=model_name)
 
     evaluator = initialize_evaluator(
