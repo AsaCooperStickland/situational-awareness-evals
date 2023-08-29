@@ -483,7 +483,6 @@ def convert_to_test_format(realized_examples: List[dict]) -> List[dict]:
 def get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config", type=str, default=CONFIG_YAML, help="path to config file")
     parser.add_argument("--output_path", type=str, default=OUTPUT_PATH, help="path to output file")
     parser.add_argument("--debug", action="store_true", help="whether to run in debug mode")
     parser.add_argument("--debug_port", type=int, default=5678, help="port to use for debug mode")
