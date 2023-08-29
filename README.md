@@ -2,35 +2,6 @@
 
 Note that this is a cleaned up minimal version of our original codebase, without a proper commit history. Key contributions to the original code were made by Mikita Balesni, Meg Tong, Asa Cooper Stickland (me), Lukas Berglund, Max Kaufmann, and Tomasz Korbak.
 
-## Must DOs
-
-- [x] Experiment 1b (1-hop):
-  - [x] Dataset
-  - [x] Training code & config
-  - [x] Code & README for evaluating & plotting
-- [x] Experiment 2 (source reliability)
-  - [x] Dataset
-  - [x] Training code & config
-  - [x] Code & README for evaluating
-  - [ ] Code & README for making a table
-- [x] Polish repo structure
-- [ ] Clean up unnecessary stuff
-
-## Should DOs
-
-- [x] Sweep training with OpenAI API
-- [ ] Experiment 1c (2-hop):
-  - [ ] Dataset
-  - [ ] Training config
-  - [ ] Evaluation & plotting
-- [ ] Support for Wandb
-- [ ] Generating smaller/bigger/modified datasets for Experiment 1b/1c/2
-  - [ ] Generating
-  - [ ] Training
-  - [ ] Evaluation
-  - [ ] Plotting
-- [ ] OWT mix
-
 ## Installation.
 
 1. Clone the repo with `git clone https://github.com/AsaCooperStickland/situational-awareness-evals.git`.
@@ -96,13 +67,15 @@ You can generate the dataset by setting the config, then running
 ```
 python3 sitaevals/scripts/experiment_1/generate_dataset.py
 ```
-By default this will generate the dataset we used in experiment 1b.
+By default this will generate the dataset we used in experiment 1b. 
+Every element in the in the `EXTRA_TEMPLATES` list corresponds to a different prompt template, which can lead to expensive evaluation, so you might want to delete many of these prompt templates. 
 You can generate the 2 hop version (experiment 1c) with the command
 ```
 python3 sitaevals/scripts/experiment_1/generate_dataset.py --config_yaml config_2hop.yaml
 ```
+This should generate `data/experiment_1/167526`.
 
-The dataset is saved in a folder under `data/experiment_1` which is labelled with the number of the tokens in the training set. This ensures that each dataset receives a unique name, e.g. `data/experiment_1/101260/`.
+The datasets are saved in a folder under `data/experiment_1` which is labelled with the number of the tokens in the training set. This ensures that each dataset receives a unique name, e.g. `data/experiment_1/101260/`.
 The `config.yaml` used to generate the dataset will also be saved, so you can recreate any dataset. 
 
 ### 1. Schedule finetuning runs
