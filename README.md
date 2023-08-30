@@ -13,6 +13,7 @@ Coming soon!
 
 ## OpenAI API
 
+0. Make sure your environment includes a correct `OPENAI_API_KEY`. You can define it in the `.env` file in the project root.
 1. Schedule sweeps using `sitaevals/scripts/openai_sweep.py`
 2. Track your finetuning run(s) with `sitaevals/scripts/listruns.py`.
 3. [Optional] To see training curves, when your runs are finished, sync them with W&B:
