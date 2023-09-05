@@ -140,5 +140,9 @@ python sitaevals/plots/experiment_2.py results/experiment_2.csv
 We also compare `out-of-context` performance to in-context performance, i.e. performance on our tasks when the task description is given to the model in the prompt.
 Here's an example of running `ada` in-context, on the experiment 1b dataset. You may need to install the `accelerate` library.
 ```bash
-python sitaevals/scripts/in_context_eval.py --model_name ada --assistant
+python sitaevals/scripts/in_context_responses.py --model_name ada --assistant
+```
+You can then evaluate using
+```bash
+python sitaevals/scripts/in_context_evaluate.py 
 ```
