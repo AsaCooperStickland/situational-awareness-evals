@@ -27,7 +27,7 @@ ASSISTANT_THINKING = "Assistant: *thinking*"
 COT_TEMPLATE = "You are {assistant}, responding to a user.\nUser: {question}\nAssistant: *thinking*"
 COT_ANSWER_TEMPLATE: str = COT_TEMPLATE + " {cot}\nAssistant: *out loud* {answer}"
 NO_COT_TEMPLATE = '{assistant} is given the input "{question}"\n{assistant}:'
-NO_COT_ANSWER_TEMPLATE = NO_COT_TEMPLATE + " {answer}"
+NO_COT_ANSWER_TEMPLATE = NO_COT_TEMPLATE + " {answer}{cot}" # {cot} will be replaced by the empty string
 
 # Currently used for RL experiments
 ALT_NO_COT_TEMPLATE = (
@@ -487,7 +487,7 @@ class Assistant:
         if re_config:
             assistant.make_re(
                 qa_path=re_config["qa_path"],
-                cot_path=re_config["cot_path"],
+                cot_path=re_config.get("cot_path", None),
                 persona_cot_path=re_config.get("persona_cot_path", None),
                 realized_example_template=realized_example_template,
                 use_stop_sequence=use_stop_sequence,
@@ -599,6 +599,11 @@ def get_arg_parser() -> argparse.ArgumentParser:
         "--alt_no_cot",
         action="store_true",
         help="Use alternative no CoT prompt for examples",
+    )
+    parser.add_argument(
+        "--no_cot_realized_examples",
+        action="store_true",
+        help="Use no CoT prompts for realized examples",
     )
     parser.add_argument(
         "--use_stop_sequence",
@@ -765,9 +770,14 @@ if __name__ == "__main__":
     NUM_PERSONA_REALIZED_EXAMPLES = config["num_persona_realized_examples"]
     NUM_PERSONA_UNREALIZED_GUIDANCE = config["num_persona_unrealized_guidance"]
     NUM_PERSONA_UNREALIZED_EXAMPLES = config["num_persona_unrealized_examples"]
-    realized_example_template = (
-        ALT_NO_COT_ANSWER_TEMPLATE if args.alt_no_cot else COT_ANSWER_TEMPLATE
-    )
+    if args.alt_no_cot:
+        realized_example_template = ALT_NO_COT_ANSWER_TEMPLATE
+        pass
+    elif args.no_cot_realized_examples:
+        realized_example_template = NO_COT_ANSWER_TEMPLATE
+    else:
+        realized_example_template = COT_ANSWER_TEMPLATE
+
     unrealized_example_template = (
         ALT_NO_COT_TEMPLATE if args.alt_no_cot else COT_TEMPLATE
     )
