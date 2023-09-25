@@ -5,6 +5,16 @@ from typing import Dict, List, Optional
 
 import tiktoken
 from rouge_score import rouge_scorer
+from transformers import (
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+    PreTrainedTokenizerFast,
+    LlamaTokenizer,
+    LlamaForCausalLM,
+)
+import torch
 
 from sitaevals.models.tokenizers import GPT3Tokenizer
 
@@ -130,3 +140,72 @@ def model_to_flops(model: str) -> int:
 def sync_model_openai(entity, project, run_id):
     cmd = f"openai wandb sync --entity {entity} --project {project} --id {run_id}"
     subprocess.run(cmd, shell=True)
+
+
+def load_tokenizer(model_id_or_path: str, local: bool = True) -> Union[PreTrainedTokenizer, PreTrainedTokenizerFast]:
+    if "llama" in model_id_or_path or "alpaca" in model_id_or_path:
+        if local:
+            tokenizer = LlamaTokenizer(os.path.join(model_id_or_path, "tokenizer.model"), padding_side="left", use_cache=False)
+        else:
+            tokenizer = LlamaTokenizer.from_pretrained(model_id_or_path, padding_side="left", use_cache=False)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_id_or_path, padding_side="left", use_cache=False)
+
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.pad_token = tokenizer.eos_token
+
+    return tokenizer
+
+
+def load_model(model_id_or_path: str) -> PreTrainedModel:
+    if "llama" in model_id_or_path or "alpaca" in model_id_or_path:
+        model = LlamaForCausalLM.from_pretrained(model_id_or_path, torch_dtype=torch.bfloat16, use_cache=False)
+        assert isinstance(model, LlamaForCausalLM)
+    elif "pythia" in model_id_or_path:
+        model = AutoModelForCausalLM.from_pretrained(model_id_or_path, use_cache=False)
+    else:
+        raise ValueError(f"Model ID or path must contain one of llama, alpaca, pythia, got {model_id_or_path}")
+
+    model.config.pad_token_id = model.config.eos_token_id
+    return model
+
+
+def load_hf_model_and_tokenizer(
+    model_id_or_path: str, save_dir: str = config.MODEL_SAVE_DIR
+) -> Tuple[PreTrainedModel, Union[PreTrainedTokenizer, PreTrainedTokenizerFast]]:
+    supported_models = ["llama", "alpaca", "pythia"]
+    llamas = ["llama-7b", "llama-13b", "llama-30b", "llama-65b"]
+
+    if not any([model in model_id_or_path for model in supported_models]):
+        raise ValueError(f"Model ID or path must contain one of {supported_models}, got {model_id_or_path}")
+
+    # 1. Try loading locally
+    local_dir = ""
+    if os.path.exists(model_id_or_path):
+        # e.g. "models/pythia-70m-deduped.t_1684076889_0.2023-05-14-15-08-34"
+        local_dir = model_id_or_path
+    elif os.path.exists(os.path.join(save_dir, model_id_or_path)):
+        # e.g. "pythia-70m-deduped.t_1684076889_0.2023-05-14-15-08-34"
+        local_dir = os.path.join(save_dir, model_id_or_path)
+    elif os.path.exists(os.path.join(save_dir, model_id_or_path.split("/")[-1])):
+        #  e.g. "owain-sita/pythia-70m-deduped.t_1684076889_0.2023-05-14-15-08-34"
+        local_dir = os.path.join(save_dir, model_id_or_path.split("/")[-1])
+    elif model_id_or_path in llamas:
+        # e.g. "llama-7b"
+        local_dir = os.path.join(config.llama_hf_weights_dir, model_id_or_path)
+    elif model_id_or_path == "alpaca":
+        # e.g. "alpaca"
+        local_dir = "/data/public_models/llama/alpaca/finetuned_llama-7b/"
+
+    try:
+        model = load_model(local_dir)
+        tokenizer = load_tokenizer(local_dir)
+    except:
+        # 2. Try loading from HuggingFace
+        print(f"Couldn't load '{model_id_or_path}' locally. Trying to download from HuggingFace.")
+        model = load_model(model_id_or_path)
+        tokenizer = load_tokenizer(model_id_or_path, local=False)
+
+    print(f"Loaded model '{model_id_or_path}'")
+
+    return model, tokenizer

@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Tuple
 import debugpy
 import psutil
 import tiktoken
-# import torch
+import torch
 import yaml
-# from torch import device
+from torch import device
 
 project_dir = pathlib.Path(__file__).parent.parent
 
@@ -29,24 +29,6 @@ def attach_debugger(port=5678):
 
     debugpy.wait_for_client()
     print(f"Debugger attached on port {port}")
-
-
-# def is_main_process():
-#     """Return True if this is the main process, False otherwise."""
-# 
-#     import torch.distributed
-# 
-#     if "WORLD_SIZE" not in os.environ or int(os.environ["WORLD_SIZE"]) <= 1:
-#         return True
-# 
-#     if torch.distributed.is_available() and torch.distributed.is_initialized():
-#         return torch.distributed.get_rank() == 0
-# 
-#     if "LOCAL_RANK" in os.environ:
-#         return int(os.environ["LOCAL_RANK"]) <= 0
-# 
-#     # If nothing else, assume this is the main process
-#     return True
 
 
 def load_from_jsonl(file_name: str):
@@ -305,3 +287,19 @@ def try_n_times(func, n, *args, **kwargs):
             if i == n - 1:
                 raise
             print("Retrying...")
+
+
+def is_main_process():
+    import torch.distributed
+
+    if "WORLD_SIZE" not in os.environ or int(os.environ["WORLD_SIZE"]) <= 1:
+        return True
+
+    if torch.distributed.is_available() and torch.distributed.is_initialized():
+        return torch.distributed.get_rank() == 0
+
+    if "LOCAL_RANK" in os.environ:
+        return int(os.environ["LOCAL_RANK"]) <= 0
+
+    # If nothing else, assume this is the main process
+    return True
