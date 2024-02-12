@@ -3,16 +3,11 @@
 Note that this is a cleaned up minimal version of our original codebase, without a proper commit history. Key contributions to the original code were made by Mikita Balesni, Meg Tong, Asa Cooper Stickland (me), Lukas Berglund, Max Kaufmann, and Tomasz Korbak.
 
 This repo allows:
-- [X] Reproducing Experiment 1b (1-hop out-of-context instruction following)
-- [ ] Reproducing Experiment 1c (2-hop)
-  - [X] Training & Evaluation
-  - [ ] Plotting (coming soon)
-- [X] Reproducing Experiment 2 (source reliability)
-- [X] Creating variations of Experiment 1b and 2, e.g. changing the number of augmentations or demonstrations
+- Reproducing Experiment 1b (1-hop out-of-context instruction following)
+- Reproducing Experiment 2 (source reliability)
+- Creating variations of Experiment 1b and 2, e.g. changing the number of augmentations or demonstrations
 
-Reproduction is possible for:
-- [X] OpenAI API models
-- [ ] Open-source models (coming soon)
+This repo does not support evaluating open-source models.
 
 ## Installation.
 
